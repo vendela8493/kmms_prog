@@ -4,6 +4,8 @@
 
 #include "menu_functions.hpp"
 
+
+
 const rva::MenuItem rva::GO_BACK =
 {
 	"0 - Вернуться к выбору предметов...", rva::go_back, &rva::OTHERS
@@ -25,6 +27,8 @@ const rva::MenuItem rva::TECHNOLOGY =
 {
 	"3 - Хочу изучать сетевые технологии!", rva::technology, &rva::OTHERS
 };
+
+
 
 namespace
 {

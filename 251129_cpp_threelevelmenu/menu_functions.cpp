@@ -3,15 +3,19 @@
 
 #include "menu_functions.hpp"
 
+
+
 const rva::MenuItem* rva::show_menu(const MenuItem* current)
 {
-	std::cout << "Обучайка привествует тебя!" << std::endl;
+	std::cout << "меню" << std::endl;
+	//std::cout << current->children[0] << std::endl;
+	//std::cout << current->children->title << std::endl;
 	for (int i = 1; i < current->children_count; i++)
 	{	
 		std::cout << current->children[i]->title << std::endl;
 	}
 	std::cout << current->children[0]->title << std::endl;
-	std::cout << "Обучайка >> ";
+
 	
 	int user_input;
 	std::cin >> user_input;
