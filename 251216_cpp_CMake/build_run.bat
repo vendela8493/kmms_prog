@@ -16,3 +16,4 @@ cmake -G %BUILD_TYPE% ..\%SOURCE_FOLDER%
 cmake --build .
 
 copy ..\%SOURCE_FOLDER%\bubble_sort\run_bubble_sort.bat .\bubble_sort
+copy ..\%SOURCE_FOLDER%\bubble_sort_mf\run_bubble_sort_mf.bat .\bubble_sort_mf
