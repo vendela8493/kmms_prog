@@ -15,4 +15,14 @@ cd %BUILD_FOLDER%
 cmake -G %BUILD_TUPE% ..\%SOURCE_FOLDER%
 cmake --build .
 
-copy ..\%SOURCE_FOLDER%\bubble_sort\build_run.bat .\bubble_sort
+set arr[0].file=build_sort.bat
+set arr[1].file=build_soft.bat
+
+set arr[0].folder=bubble_soft
+set arr[1].folder=learn_soft
+
+for /L %%i in (0, 1) do (
+	copy ..\%SOURCE_FOLDER%\!arr[%%i].folder!\!arr[%%i].file! .\!arr[%%i].folder!
+)
+
+copy ..\run_tests.bat .
