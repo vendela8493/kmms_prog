@@ -1,6 +1,6 @@
 @echo off
 
-set BUILD_TUPE=Ninja
+set BUILD_TYPE=Ninja
 set BUILD_SUFFIX=ninja
 
 chcp 65001
@@ -12,7 +12,7 @@ if not exist %BUILD_FOLDER% mkdir %BUILD_FOLDER%
 
 cd %BUILD_FOLDER%
 
-cmake -G %BUILD_TUPE% ..\%SOURCE_FOLDER%
+cmake -G %BUILD_TYPE% ..\%SOURCE_FOLDER%
 cmake --build .
 
 set arr[0].file=build_run.bat
