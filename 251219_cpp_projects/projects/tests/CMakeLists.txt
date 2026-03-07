@@ -1,6 +1,6 @@
 project(tests)
 
-set(LIBRARY bubble_sort_lib)
+set(LIBRARY bubble_sort_lib222)
 
 add_library(${LIBRARY}
 	src/bubble_sort.cpp
