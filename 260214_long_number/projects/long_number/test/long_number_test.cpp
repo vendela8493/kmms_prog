@@ -1,191 +1,115 @@
 #include <gtest/gtest.h>
+
 #include "long_number.hpp"
 
-using namespace rva;
+using rva::LongNumber;
 
-class Numbers : public testing::Test{
-  protected:
-    void SetUp() override {
-        // Можно добавить инициализацию если нужно
-    }
-    
-    rva::LongNumber zero = rva::LongNumber("0");
-    
-    rva::LongNumber num1 = rva::LongNumber("1");
-    rva::LongNumber num1_copy = rva::LongNumber("1");
-    rva::LongNumber num1_neg = rva::LongNumber("-1");
-    rva::LongNumber num1_neg_copy = rva::LongNumber("-1");
-    
-    rva::LongNumber num2 = rva::LongNumber("2");
-    rva::LongNumber num2_neg = rva::LongNumber("-2");
-    rva::LongNumber num3 = rva::LongNumber("3");
-    rva::LongNumber num3_neg = rva::LongNumber("-3");
-    rva::LongNumber num4 = rva::LongNumber("4");
-    rva::LongNumber num4_neg = rva::LongNumber("-4");
-    rva::LongNumber num5 = rva::LongNumber("7");  // Это 7, а не 5
-    rva::LongNumber num5_neg = rva::LongNumber("-7");
-    rva::LongNumber num6 = rva::LongNumber("10");
-    rva::LongNumber num6_neg = rva::LongNumber("-10");
-    rva::LongNumber num7 = rva::LongNumber("21");
-    rva::LongNumber num7_neg = rva::LongNumber("-21");
-    
-    // Добавим недостающие числа
-    rva::LongNumber num11 = rva::LongNumber("123");
-    rva::LongNumber num11_neg = rva::LongNumber("-123");
-    rva::LongNumber num8 = rva::LongNumber("45");  // Для 123 - 45 = 78
-    rva::LongNumber big_num = rva::LongNumber("1234567");
-    rva::LongNumber big_num_neg = rva::LongNumber("-1234567");
-    rva::LongNumber big_num_copy = rva::LongNumber("1234567");
-    
-    rva::LongNumber long_num = rva::LongNumber("12345");
-    rva::LongNumber long_num_neg = rva::LongNumber("-12345");
-    rva::LongNumber long_num_copy = rva::LongNumber("12345");
+class FComparisons : public testing::Test {
+	public:
+		LongNumber 
+			n_2{"-2"}, n_1{"-1"}, n_1_copy{"-1"},
+			
+			p_1{"1"}, p_1_copy{"1"}, p_12{"12"};
 };
 
-TEST_F(Numbers, EQ_Test) {
-    EXPECT_TRUE(num1 == num1_copy);        // 1 = 1
-    EXPECT_TRUE(num1_neg == num1_neg_copy); // -1 = -1
-    EXPECT_FALSE(num1 == num1_neg);        // 1 != -1
-    EXPECT_FALSE(long_num == long_num_neg); // 12345 != -12345
-    EXPECT_TRUE(long_num == long_num_copy); // 12345 = 12345
+TEST_F(FComparisons, equal) {
+	EXPECT_TRUE(p_1 == p_1_copy) << "EXPECT_TRUE: 1 == 1";
+	EXPECT_FALSE(n_1 == p_1) << "EXPECT_FALSE: -1 == 1";
+	EXPECT_FALSE(p_1 == p_12) << "EXPECT_FALSE: 1 == 12";
+	EXPECT_EQ(p_1, p_1_copy) << "EXPECT_EQ: 1 == 1";
+	EXPECT_EQ(n_1, n_1_copy) << "EXPECT_EQ: -1 == -1";
 }
 
-TEST_F(Numbers, NE_Test) {
-    EXPECT_TRUE(num1 != num1_neg);      // 1 != -1
-    EXPECT_TRUE(num2 != num3);           // 2 != 3
-    EXPECT_TRUE(num1 != num2);           // 1 != 2
-    EXPECT_TRUE(num1_neg != num2_neg);   // -1 != -2
-    EXPECT_TRUE(big_num != big_num_neg); // 1234567 != -1234567
-    EXPECT_TRUE(num1 != zero);           // 1 != 0
-    EXPECT_TRUE(num1_neg != zero);       // -1 != 0
+TEST_F(FComparisons, not_equal) {
+	EXPECT_TRUE(n_1 != p_1) << "EXPECT_TRUE: -1 != 1";
+	EXPECT_TRUE(p_1 != p_12) << "EXPECT_TRUE: 1 != 12";
+	EXPECT_FALSE(p_1 != p_1_copy) << "EXPECT_FALSE: 1 == 1";
+	ASSERT_NE(p_1, p_12) << "ASSERT_NE: 1 != 12";
+	ASSERT_NE(n_1, p_1) << "ASSERT_NE: -1 != 1";
 }
 
-TEST_F(Numbers, Gt_Test) {
-    // Положительные
-    EXPECT_TRUE(num3 > num2);            // 3 > 2
-    EXPECT_TRUE(num5 > num3);            // 7 > 3
-    EXPECT_TRUE(num6 > num5);            // 10 > 7
-    EXPECT_TRUE(num7 > num5);            // 21 > 7
-    EXPECT_TRUE(num11 > num5);            // 123 > 7
-    EXPECT_TRUE(big_num > num11);         // 1234567 > 123
-    
-    // Отрицательные
-    EXPECT_TRUE(num2_neg > num3_neg);    // -2 > -3
-    EXPECT_TRUE(num3_neg > num5_neg);    // -3 > -7
-    EXPECT_TRUE(num5_neg > num6_neg);    // -7 > -10
-    EXPECT_TRUE(num6_neg > num7_neg);    // -10 > -21
-    EXPECT_TRUE(num11_neg > big_num_neg); // -123 > -1234567
-    
-    // Положительные и отрицательные
-    EXPECT_TRUE(num1 > num1_neg);        // 1 > -1
-    EXPECT_TRUE(num2 > num3_neg);        // 2 > -3
-    EXPECT_TRUE(num5 > num6_neg);        // 7 > -10
-    EXPECT_TRUE(big_num > big_num_neg);  // 1234567 > -1234567
-    EXPECT_TRUE(zero > num1_neg);        // 0 > -1
-    EXPECT_TRUE(num1 > zero);            // 1 > 0
+TEST_F(FComparisons, more) {
+	EXPECT_TRUE(p_12 > p_1) << "12 > 1";
+	EXPECT_TRUE(p_1 > n_1) << "1 > -1";
+	EXPECT_TRUE(n_1 > n_2) << "-1 > -2";
+	EXPECT_FALSE(p_1_copy > p_1) << "1 > 1";
+	EXPECT_FALSE(p_1 > p_12) << "1 > 12";
 }
 
-TEST_F(Numbers, Lt_Test) {
-    // Положительные
-    EXPECT_TRUE(num2 < num3);            // 2 < 3
-    EXPECT_TRUE(num3 < num5);            // 3 < 7
-    EXPECT_TRUE(num5 < num6);            // 7 < 10
-    EXPECT_TRUE(num5 < num7);            // 7 < 21
-    EXPECT_TRUE(num11 < big_num);         // 123 < 1234567
-    
-    // Отрицательные
-    EXPECT_TRUE(num3_neg < num2_neg);    // -3 < -2
-    EXPECT_TRUE(num5_neg < num3_neg);    // -7 < -3
-    EXPECT_TRUE(num6_neg < num5_neg);    // -10 < -7
-    EXPECT_TRUE(num7_neg < num6_neg);    // -21 < -10
-    EXPECT_TRUE(big_num_neg < num11_neg); // -1234567 < -123
-    
-    // Положительные и отрицательные
-    EXPECT_TRUE(num1_neg < num1);        // -1 < 1
-    EXPECT_TRUE(num3_neg < num2);        // -3 < 2
-    EXPECT_TRUE(num6_neg < num5);        // -10 < 7
-    EXPECT_TRUE(big_num_neg < big_num);  // -1234567 < 1234567
-    EXPECT_TRUE(num1_neg < zero);        // -1 < 0
-    EXPECT_TRUE(zero < num1);            // 0 < 1
+TEST_F(FComparisons, less) {
+	EXPECT_TRUE(p_1 < p_12) << "1 < 12";
+	EXPECT_TRUE(n_1 < p_1) << "-1 < 1";
+	EXPECT_TRUE(n_2 < n_1) << "-2 < -1";
+	EXPECT_FALSE(p_1_copy < p_1) << "1 < 1";
+	EXPECT_FALSE(p_12 < p_1) << "12 < 1";
 }
 
-TEST_F(Numbers, Add_Test) {
-    EXPECT_TRUE(num6 == num5 + num3);    // 7 + 3 = 10
-    EXPECT_TRUE(num5_neg == num3_neg + num4_neg); // -3 + -4 = -7
-    EXPECT_TRUE(num5 == num6 + num3_neg); // 10 + -3 = 7
-	EXPECT_TRUE(zero == zero + zero);     // 0 + 0 = 0
-    
-    rva::LongNumber sum = rva::LongNumber("1234569");
-    EXPECT_TRUE(sum == big_num + num2);   // 1234567 + 2 = 1234569
-    
-    rva::LongNumber sum2 = rva::LongNumber("1234564");
-    EXPECT_TRUE(sum2 == big_num + num3_neg); // 1234567 + -3 = 1234564
+class FArithmetic : public testing::Test {
+	public:
+		LongNumber 
+			n_19602{"-19602"}, n_99{"-99"}, n_87{"-87"}, n_17{"-17"},
+			n_16{"-16"}, n_15{"-15"},
+			n_7{"-7"}, n_4{"-4"}, n_3{"-3"}, n_2{"-2"}, n_1{"-1"},
+		
+			p_0{"0"}, p_1{"1"}, p_1_copy{"1"}, p_2{"2"}, p_3{"3"},
+			p_4{"4"}, p_6{"6"}, p_12{"12"}, p_16{"16"}, p_17{"17"}, 
+			p_99{"99"}, p_99_copy{"99"}, 
+			p_113{"113"}, p_198{"198"}, p_1188{"1188"}, p_19602{"19602"},
+			
+			n_100{"-100"}, n_6{"-6"}, p_100{"100"}, p_{"6"};
+};
+
+TEST_F(FArithmetic, summ) {
+	EXPECT_EQ(p_2, p_1 + p_1_copy) << "1 + 1 = 2";
+	EXPECT_EQ(p_0, p_1 + n_1) << "1 + (-1) = 0";
+	EXPECT_EQ(p_198, p_99 + p_99_copy) << "99 + 99 = 198";	
+	EXPECT_EQ(n_87, n_99 + p_12) << "-99 + 12 = -87";	
+	EXPECT_EQ(n_87, p_12 + n_99) << "12 + (-99) = -87";	
 }
 
-TEST_F(Numbers, Sub_Test) {
-    EXPECT_TRUE(num1_neg == num3 - num4); // 3 - 4 = -1
-    EXPECT_TRUE(num3 == num5_neg - num6_neg); // -7 - -10 = 3
-        
-    EXPECT_TRUE(num1_neg == num1_neg - zero); // -1 - 0 = -1
-    EXPECT_TRUE(zero == zero - zero);     // 0 - 0 = 0
-    
-    rva::LongNumber sub = rva::LongNumber("1234565");    
-    rva::LongNumber sub2 = rva::LongNumber("1234570");
-    EXPECT_TRUE(sub2 == big_num - num3_neg); // 1234567 - -3 = 1234570
+TEST_F(FArithmetic, substraction) {
+	EXPECT_EQ(p_0, p_1 - p_1_copy) << "1 - 1 = 0";
+	EXPECT_EQ(p_2, p_1 - n_1) << "1 + (-1) = 2";
+	EXPECT_EQ(n_87, p_12 - p_99) << "12 - 99 = -87";
 }
 
-TEST_F(Numbers, Mul_Test) {
-    EXPECT_TRUE(num2 == num2 * num1);     // 2 * 1 = 2
-    EXPECT_TRUE(num2 == num1_neg * num2_neg); // -1 * -2 = 2
-    EXPECT_TRUE(num2_neg == num2 * num1_neg); // 2 * -1 = -2
-    EXPECT_TRUE(rva::LongNumber("-6") == num2_neg * num3); // -2 * 3 = -6
-    
-    EXPECT_TRUE(zero == num1 * zero);      // 1 * 0 = 0
-    EXPECT_TRUE(zero == zero * num5);      // 0 * 7 = 0
-    EXPECT_TRUE(zero == zero * zero);      // 0 * 0 = 0
-    
-    EXPECT_TRUE(num5 == num5 * num1);      // 7 * 1 = 7
-    EXPECT_TRUE(num5_neg == num5_neg * num1); // -7 * 1 = -7
-    
-    rva::LongNumber mul = rva::LongNumber("2469134");
-    EXPECT_TRUE(mul == num2 * big_num);    // 2 * 1234567 = 2469134
-    
-    rva::LongNumber mul2 = rva::LongNumber("3703701");
-    EXPECT_TRUE(mul2 == num3 * big_num);   // 3 * 1234567 = 3703701
+TEST_F(FArithmetic, multiply) {
+	EXPECT_EQ(p_1, p_1 * p_1_copy) << "1 * 1 = 1";
+	EXPECT_EQ(n_1, p_1 * n_1) << "1 * (-1) = -1";
+	EXPECT_EQ(p_0, p_0 * p_99) << "0 * 99 = 0";
+	EXPECT_EQ(p_1188, p_12 * p_99) << "12 * 99 = 1188";
+	EXPECT_EQ(n_19602, p_198 * p_99 * n_1) << "198 * 99 * -1 = -19602";
 }
 
-TEST_F(Numbers, Div_Test) {
-    EXPECT_TRUE(num5 == num7 / num3);      // 21 / 3 = 7
-    EXPECT_TRUE(num2 == num5 / num3);      // 7 / 3 = 2 (целочисленное)    
-    
-    EXPECT_TRUE(num2 == num5_neg / num3_neg); // -7 / -3 = 2
-    EXPECT_TRUE(zero == num3_neg / num4_neg); // -3 / -4 = 0
-    
-    EXPECT_TRUE(num5_neg == num7_neg / num3); // -21 / 3 = -7
-    EXPECT_TRUE(rva::LongNumber("-3") == num5 / num2_neg); // 7 / -2 = -3
-    EXPECT_TRUE(zero == num4_neg / num5); // -4 / 7 = 0
-    EXPECT_TRUE(zero == num4 / num5_neg); // 4 / -7 = 0
-    
-    EXPECT_TRUE(num5 == num5 / num1);      // 7 / 1 = 7
-    EXPECT_TRUE(num5_neg == num5_neg / num1); // -7 / 1 = -7
-    
-    rva::LongNumber div = rva::LongNumber("617283");
-    EXPECT_TRUE(div == big_num / num2);    // 1234567 / 2 = 617283
-    
-    rva::LongNumber div2 = rva::LongNumber("411522");
-    EXPECT_TRUE(div2 == big_num / num3);   // 1234567 / 3 = 411522
+TEST_F(FArithmetic, division) {
+	EXPECT_EQ(p_2, p_2 / p_1) << "2 / 1 = 2";
+	EXPECT_EQ(p_198, p_19602 / p_99) << "19602 / 99 = 198";
+	EXPECT_EQ(p_99, n_19602 / p_198 / n_1) << "-19602 / 198 / -1  = 99";
 }
 
-TEST_F(Numbers, Rem_Test) {
-    EXPECT_TRUE(num3 == num5 % num4);      // 7 % 4 = 3
-    EXPECT_TRUE(zero == num7 % num3);      // 21 % 3 = 0
-    EXPECT_TRUE(num3 == num3 % num4);      // 3 % 4 = 3
-    
-    EXPECT_TRUE(num1_neg == num5_neg % num3_neg); // -7 % -3 = -1
-    EXPECT_TRUE(num3_neg == num3_neg % num4_neg); // -3 % -4 = -3
-    EXPECT_TRUE(zero == num4_neg % num2_neg);     // -4 % -2 = 0
-    EXPECT_TRUE(num6 == num6 % num7_neg);         // 10 % -21 = 10
-        
-    EXPECT_TRUE(rva::LongNumber("1") == big_num % num2); // 1234567 % 2 = 1
-    EXPECT_TRUE(rva::LongNumber("0") == big_num % num1); // 1234567 % 1 = 0
+TEST_F(FArithmetic, division_full_sign_example) {
+	EXPECT_EQ(p_16, p_100 / p_6) << "100 / 6 = 16";
+	EXPECT_EQ(n_16, p_100 / n_6) << "100 / -6 = -16";
+	EXPECT_EQ(n_17, n_100 / p_6) << "-100 / 6 = -17";
+	EXPECT_EQ(p_17, n_100 / n_6) << "-100 / -6 = 17";
+}
+
+TEST_F(FArithmetic, remainder) {
+	EXPECT_EQ(p_1, p_3 % p_2) << "3 % 2 = 1";
+	EXPECT_EQ(p_6, p_19602 % p_12) << "19602 % 12 = 6";
+	EXPECT_EQ(p_1, n_15 % p_4) << "-15 % 4 = 1";
+	EXPECT_EQ(p_2, p_113 % n_3) << "113 % -3 = 2";
+	EXPECT_EQ(p_6, n_15 % n_7) << "-15 % -7 = 6";
+}
+
+TEST_F(FArithmetic, remainder_full_sign_example) {
+	EXPECT_EQ(p_4, p_100 % p_6) << "100 % 6 = 4";
+	EXPECT_EQ(p_4, p_100 % n_6) << "100 % -6 = 4";
+	EXPECT_EQ(p_2, n_100 % p_6) << "-100 % 6 = 2";
+	EXPECT_EQ(p_2, n_100 % n_6) << "-100 % -6 = 2";
+}
+
+int main(int argc, char **argv) {
+	::testing::InitGoogleTest(&argc, argv);
+	return RUN_ALL_TESTS();
 }
