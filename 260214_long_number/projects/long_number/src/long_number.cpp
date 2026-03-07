@@ -202,73 +202,52 @@ bool LongNumber::operator < (const LongNumber& x) const {
 }
 
 LongNumber LongNumber::operator + (const LongNumber& x) const {
-  LongNumber res;
-  LongNumber min;
-  LongNumber max;
-  if (sign == x.sign) {
-    if (*this > x) {
-      res = LongNumber(length + 1, sign);
-      min = x;
-      max = *this;
-    } else {
-      res = LongNumber(x.length + 1, sign);
-      min = *this;
-      max = x;
+    LongNumber res;
+    
+    if (sign == x.sign) {
+        int max_len = (length > x.length) ? length : x.length;
+        res = LongNumber(max_len + 1, sign);
+        
+        for (int i = 0; i < res.length; i++) {
+            res.numbers[i] = 0;
+        }
+        
+        for (int i = 0; i < max_len; i++) {
+            if (i < length) res.numbers[i] += numbers[i];
+            if (i < x.length) res.numbers[i] += x.numbers[i];
+        }
+        
+        for (int i = 0; i < res.length - 1; i++) {
+            if (res.numbers[i] >= 10) {
+                res.numbers[i + 1] += res.numbers[i] / 10;
+                res.numbers[i] %= 10;
+            }
+        }
+        
+        while (res.length > 1 && res.numbers[res.length - 1] == 0) {
+            res.length--;
+        }
+    }
+    else {
+        LongNumber abs_this = *this;
+        LongNumber abs_x = x;
+        abs_this.sign = 1;
+        abs_x.sign = 1;
+        
+        if (abs_this == abs_x) {
+            return LongNumber("0");
+        }
+        else if (abs_this > abs_x) {
+            res = abs_this - abs_x; 
+            res.sign = sign;
+        }
+        else {
+            res = abs_x - abs_this;
+            res.sign = x.sign; 
+        }
     }
     
-    for (int i = 0; i < min.length; i++)
-      res.numbers[i] = min.numbers[i] + max.numbers[i];
-    
-    for (int i = min.length; i < max.length; i++)
-      res.numbers[i] = max.numbers[i];
-    
-    for (int i = 0; i < res.length - 1; i++) {
-      if (res.numbers[i] > 9) {
-        res.numbers[i] -= 10;
-        res.numbers[i+1]++;
-      }
-    }
-    
-    if (res.numbers[res.length - 1] == 0)
-      res.length--;
-  } else {
-    LongNumber abs_x = x;
-    LongNumber dividend = *this;
-    
-    abs_x.sign = 1;
-    dividend.sign = 1;
-    
-    if (dividend > abs_x) {
-      res = LongNumber(length + 1, sign);
-      min = x;
-      max = *this;
-    } else {
-      res = LongNumber(x.length + 1, x.sign);
-      min = *this;
-      max = x;
-    }
-    
-    for (int i = 0; i < max.length; i++)
-      res.numbers[i] = max.numbers[i];
-    
-    for (int i = 0; i < min.length; i++)
-      res.numbers[i] = res.numbers[i] - min.numbers[i];
-    
-    for (int i = 0; i < res.length - 1; i++) {
-      if (res.numbers[i] < 0) {
-        res.numbers[i] += 10;
-        res.numbers[i+1]--;
-      }
-    }
-    
-    while (res.length > 1 and res.numbers[res.length - 1] == 0)
-      res.length--;
-    
-    if (res.length == 1 and res.numbers[0] == 0)
-      res.sign = 1;
-  }
-  
-  return res;
+    return res;
 }
 
 LongNumber LongNumber::operator - (const LongNumber& x) const {
@@ -282,71 +261,137 @@ LongNumber LongNumber::operator - (const LongNumber& x) const {
 }
 
 LongNumber LongNumber::operator * (const LongNumber& x) const {
-  LongNumber res;
-  res = LongNumber(length + x.length, sign * x.sign);
-  for (int i = 0; i < x.length; i++) {
-    for (int j = 0; j < length; j++) {
-      res.numbers[i+j] += x.numbers[i] * numbers[j];
-      if (res.numbers[i+j] > 9) {
-        int r = res.numbers[i+j]/10;
-        res.numbers[i+j+1] += r;
-        res.numbers[i+j] -= r*10;
-      }
+	LongNumber result(length + x.length, sign * x.sign);
+	for (int i = 0; i < result.length; i++) {
+        result.numbers[i] = 0;
     }
-  }
-  while (res.length > 1 and res.numbers[res.length - 1] == 0)
-    res.length--;
-  return res;
+    
+    for (int i = 0; i < length; i++) {
+        int carry = 0;
+        for (int j = 0; j < x.length; j++) {
+            int product = numbers[i] * x.numbers[j] + result.numbers[i + j] + carry;
+            result.numbers[i + j] = product % 10;
+            carry = product / 10;
+        }
+        if (carry > 0) {
+            result.numbers[i + x.length] += carry;
+        }
+    }
+    
+    for (int i = 0; i < result.length - 1; i++) {
+        if (result.numbers[i] >= 10) {
+            result.numbers[i + 1] += result.numbers[i] / 10;
+            result.numbers[i] = result.numbers[i] % 10;
+        }
+    }
+    
+    while (result.length > 1 && result.numbers[result.length - 1] == 0) {
+        result.length--;
+    }
+    
+    if (result.length == 1 && result.numbers[0] == 0) {
+        result.sign = 1;
+    }
+    
+    return result;
 }
 
 LongNumber LongNumber::operator / (const LongNumber& x) const {
-  LongNumber res;
-  LongNumber abs_x = x;
-  LongNumber dividend = *this;
-  
-  abs_x.sign = 1;
-  dividend.sign = 1;
-  
-  if (dividend < abs_x)
-    return res;
-  else {
+  if (x.length == 1 && x.numbers[0] == 0) {
+        return LongNumber("0");
+    }
+    
+    LongNumber res;
+    LongNumber abs_x = x;
+    LongNumber dividend = *this;
+    
+    abs_x.sign = 1;
+    dividend.sign = 1;
+    
+    if (dividend < abs_x) {
+        return LongNumber("0");  
+    }
+    
     res = LongNumber(length - x.length + 1, sign * x.sign);
     
     for (int i = 0; i < res.length; i++) {
-      LongNumber divisor = LongNumber(length - i, 1);
-      
-      for (int j = 0; j < x.length; j++)
-        divisor.numbers[length - x.length - i + j] = x.numbers[j];
-      
-      int counter = 0;
-      while (dividend > divisor or dividend == divisor) {
-        counter++;
-        dividend = dividend - divisor;
-      }
-      res.numbers[res.length - i - 1] = counter;
+        res.numbers[i] = 0;
     }
-  }
-  
-  while (res.length > 1 and res.numbers[res.length - 1] == 0)
-    res.length--;
-  
-  return res;
+    
+    for (int i = 0; i < res.length; i++) {
+        LongNumber divisor(length - i, 1);
+        
+        for (int j = 0; j < divisor.length; j++) {
+            divisor.numbers[j] = 0;
+        }
+        
+        for (int j = 0; j < x.length; j++) {
+            int pos = length - x.length - i + j;
+            if (pos >= 0 && pos < divisor.length) {
+                divisor.numbers[pos] = x.numbers[j];
+            }
+        }
+        
+        while (divisor.length > 1 && divisor.numbers[divisor.length - 1] == 0) {
+            divisor.length--;
+        }
+        
+        int counter = 0;
+        while (dividend > divisor || dividend == divisor) {
+            counter++;
+            
+            for (int j = 0; j < divisor.length; j++) {
+                dividend.numbers[j] -= divisor.numbers[j];
+            }
+            
+            for (int j = 0; j < dividend.length - 1; j++) {
+                if (dividend.numbers[j] < 0) {
+                    dividend.numbers[j] += 10;
+                    dividend.numbers[j + 1]--;
+                }
+            }
+            
+            while (dividend.length > 1 && dividend.numbers[dividend.length - 1] == 0) {
+                dividend.length--;
+            }
+        }
+        
+        res.numbers[res.length - i - 1] = counter;
+    }
+    
+    while (res.length > 1 && res.numbers[res.length - 1] == 0) {
+        res.length--;
+    }
+	if (res.sign == -1 and dividend > 0) {
+		LongNumber one(1, 1);
+		res = res - one;
+	}
+    
+    return res;
 }
 
 LongNumber LongNumber::operator % (const LongNumber& x) const {
-  LongNumber res;
-  LongNumber abs_x = x;
-  LongNumber dividend = *this;
-  
-  abs_x.sign = 1;
-  dividend.sign = 1;
-  
-  res = dividend - (dividend / abs_x) * abs_x;
-  
-  if (is_negative())
-    res.sign = -1;
-  
-  return res;
+  if (x.length == 1 && x.numbers[0] == 0) {
+        return LongNumber("0");
+    }
+    
+    LongNumber abs_this = *this;
+    LongNumber abs_x = x;
+    
+    abs_this.sign = 1;
+    abs_x.sign = 1;
+    
+    LongNumber quotient = abs_this / abs_x; 
+    
+    LongNumber product = quotient * abs_x;
+    
+    LongNumber remainder = abs_this - product;
+    
+    if (this->sign == -1 && !(remainder.length == 1 && remainder.numbers[0] == 0)) {
+        remainder.sign = -1;
+    }
+    
+    return remainder;
 }
 
 bool LongNumber::is_negative() const noexcept {
