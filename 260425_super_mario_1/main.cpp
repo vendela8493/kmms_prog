@@ -11,6 +11,7 @@
 typedef struct SObject {
 	float x, y;
 	float width, height;
+	float vertSpeed;
 } TObject;
 
 
@@ -45,6 +46,18 @@ void InitObject(TObject *obj, float xPos, float yPos, float oWidth, float oHeigh
 	SetObjectPos(obj, xPos, yPos);
 	(*obj).width = oWidth;
 	(*obj).height = oHeight;
+	(*obj).vertSpeed = 0;
+}
+
+void VertMoveObject(TObject *obj)
+{
+	(*obj).vertSpeed += 0.05;
+	SetObjectPos(obj, (*obj).x, (*obj).y + (*obj).vertSpeed );
+}
+
+BOOL IsPosInMap(int x, int y)
+{
+	return ( (x >= 0) && (x < mapWidth) && (y >= 0) && (y < mapHeight) );
 }
 
 void PutObjectOnMap(TObject obj)
@@ -56,7 +69,8 @@ void PutObjectOnMap(TObject obj)
 	
 	for (int i = ix; i < (ix + iWidth); i++)
 		for (int j = iy; j < (iy + iHeight); j++)
-			map[j][i] = '@';
+			if (IsPosInMap(i,j))
+				map[j][i] = '@';
 }
 
 
@@ -76,10 +90,13 @@ int main()
 	do 
 	{
 		ClearMap();
+		VertMoveObject(&mario);
 		PutObjectOnMap(mario);
 		
 		setCur(0, 0);
 		ShowMap();
+		
+		Sleep(10);
 	}
 	while (GetKeyState(VK_ESCAPE) >= 0);
 	
