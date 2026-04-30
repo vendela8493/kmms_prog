@@ -5,7 +5,7 @@
 #include <windows.h>
 
 #define mapWidth 80
-#define mapHeight 40
+#define mapHeight 25
 
 
 typedef struct SObject {
@@ -24,14 +24,14 @@ void ClearMap()
 		map[0][i] = '.';
 	map[0][mapWidth] = '\0';
 	for (int j = 1; j < mapHeight; j++)
-		sprintf(map[j], map[0]);
+		sprintf( map[j], map[0]);
 }
 
 void ShowMap()
 {
 	map[mapHeight - 1][mapWidth - 1] = '\0';
 	for (int j = 0; j < mapHeight; j++)
-		printf("%s", map[j]);
+		printf("%s\n", map[j]);
 }
 
 void SetObjectPos(TObject *obj, float xPos, float yPos)
@@ -59,6 +59,16 @@ void PutObjectOnMap(TObject obj)
 			map[j][i] = '@';
 }
 
+
+void setCur(int x, int y)
+{
+	COORD coord;
+	coord.X = x;
+	coord.Y = y;
+	SetConsoleCursorPosition( GetStdHandle(STD_OUTPUT_HANDLE), coord );
+}
+
+
 int main()
 {
 	InitObject(&mario, 39, 10, 3, 3);
@@ -67,6 +77,8 @@ int main()
 	{
 		ClearMap();
 		PutObjectOnMap(mario);
+		
+		setCur(0, 0);
 		ShowMap();
 	}
 	while (GetKeyState(VK_ESCAPE) >= 0);
