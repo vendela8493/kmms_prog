@@ -22,8 +22,8 @@ GameObject player;
 GameObject* background_elem = nullptr;
 int background_elems_count = 0;
 
-GameObject* sprite = nullptr;
-int sprites_count = 0;
+GameObject* enemy = nullptr;
+int enemies_count = 0;
 
 int current_level = 1;
 int score = 0;
@@ -31,7 +31,7 @@ int max_level = 3;
 
 void add_object_on_map(const GameObject& obj);
 GameObject* add_new_background_elem();
-GameObject* add_new_sprite();
+GameObject* add_new_enemy();
 bool check_collision(const GameObject& obj_1, const GameObject& obj_2);
 void clear_map();
 void create_level(int level);
@@ -40,7 +40,7 @@ void init_object(GameObject* obj, float init_x, float init_y, float init_width, 
 void kill_player();
 bool object_within_map(int x, int y);
 void player_collision_model();
-void remove_sprite(int i);
+void remove_enemy(int i);
 void scroll_map(float dx);
 void set_cursor(int x, int y);
 void set_object_pos(GameObject* obj, float obj_pos_x, float obj_pos_y);
@@ -83,19 +83,19 @@ int main()
 			add_object_on_map(background_elem[i]);
 		}
 		
-		for (int i = 0; i < sprites_count; i++)
+		for (int i = 0; i < enemies_count; i++)
 		{
-			vertical_move_object(&sprite[i]);
-			horizontal_move_object(&sprite[i]);
-			add_object_on_map(sprite[i]);
+			vertical_move_object(&enemy[i]);
+			horizontal_move_object(&enemy[i]);
 			
-			if (sprite[i].y > MAP_HEIGHT)
+			if (enemy[i].y > MAP_HEIGHT)
 			{
-				remove_sprite(i);
+				remove_enemy(i);
 				i--;
 				continue;
 			}
-			add_object_on_map(sprite[i]);
+			
+			add_object_on_map(enemy[i]);
 		}
 		add_object_on_map(player);
 		show_score();
@@ -108,7 +108,7 @@ int main()
 	while (GetKeyState(VK_ESCAPE) >= 0);
 	
 	free(background_elem);
-	free(sprite);
+	free(enemy);
 	
 	return 0;
 }
@@ -137,16 +137,22 @@ GameObject *add_new_background_elem()
 {
 	background_elems_count++;
 	GameObject* temp = (GameObject*)realloc(background_elem, sizeof(*background_elem) * background_elems_count);
-	if (temp != nullptr) background_elem = temp;
-	return background_elem + background_elems_count - 1;
+	if (temp != nullptr)
+	{
+		background_elem = temp;
+	}
+	return &background_elem[background_elems_count - 1];
 }
 
-GameObject *add_new_sprite()
+GameObject *add_new_enemy()
 {
-	sprites_count++;
-	GameObject* temp = (GameObject*)realloc( sprite, sizeof(*sprite) * sprites_count );
-	if (temp != nullptr) sprite = temp;
-	return sprite + sprites_count - 1;
+	enemies_count++;
+	GameObject* temp = (GameObject*)realloc( enemy, sizeof(*enemy) * enemies_count );
+	if (temp != nullptr)
+	{
+		enemy = temp;
+	}
+	return &enemy[enemies_count - 1];
 }
 
 bool check_collision(const GameObject& obj_1, const GameObject& obj_2)
@@ -179,9 +185,9 @@ void create_level(int lvl)
 	background_elems_count = 0;
 	background_elem = nullptr;
 	
-	free(sprite);
-	sprites_count = 0;
-	sprite = nullptr;
+	free(enemy);
+	enemies_count = 0;
+	enemy = nullptr;
 	
 	init_object(&player, 39, 10, 3, 3, '@');
 	score = 0;
@@ -202,8 +208,8 @@ void create_level(int lvl)
 		init_object(add_new_background_elem(), 150, 20, 40, 5, '#');
 		init_object(add_new_background_elem(), 210, 15, 10, 10, '+');
 		
-		init_object(add_new_sprite(), 25, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 80, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 25, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 80, 10, 3, 2, 'o');
 	}
 	
 	if (lvl == 2)
@@ -215,12 +221,12 @@ void create_level(int lvl)
 		init_object(add_new_background_elem(), 150, 20, 40, 5, '#');
 		init_object(add_new_background_elem(), 210, 15, 10, 10, '+');
 
-		init_object(add_new_sprite(), 25, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 80, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 65, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 120, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 160, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 175, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 25, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 80, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 65, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 120, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 160, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 175, 10, 3, 2, 'o');
 	}
 	
 	if (lvl == 3)
@@ -230,12 +236,12 @@ void create_level(int lvl)
 		init_object(add_new_background_elem(), 120, 15, 15, 10, '#');
 		init_object(add_new_background_elem(), 160, 10, 15, 15, '+');
 		
-		init_object(add_new_sprite(), 25, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 50, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 80, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 90, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 120, 10, 3, 2, 'o');
-		init_object(add_new_sprite(), 130, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 25, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 50, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 80, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 90, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 120, 10, 3, 2, 'o');
+		init_object(add_new_enemy(), 130, 10, 3, 2, 'o');
 	}
 	
 	max_level = 3;
@@ -257,7 +263,7 @@ void horizontal_move_object(GameObject *obj)
 	{
 		GameObject tmp = *obj;
 		vertical_move_object(&tmp);
-		if (tmp.is_flying == true)
+		if (tmp.is_flying)
 		{
 			obj->x -= obj->horizontal_speed;
 			obj->horizontal_speed = -obj->horizontal_speed;
@@ -290,18 +296,18 @@ bool object_within_map(int x, int y)
 
 void player_collision_model()
 {
-	for (int i = 0; i < sprites_count; i++)
+	for (int i = 0; i < enemies_count; i++)
 	{
-		if (check_collision( player, sprite[i]))
+		if (check_collision( player, enemy[i]))
 		{
-			if (sprite[i].kind == 'o')
+			if (enemy[i].kind == 'o')
 			{
 				if ((player.is_flying == true) &&
 					(player.vertical_speed > 0) &&
-					(player.y + player.height < sprite[i].y + sprite[i].height * 0.5 ))
+					(player.y + player.height < enemy[i].y + enemy[i].height * 0.5 ))
 				{
 					score += 50;
-					remove_sprite(i);
+					remove_enemy(i);
 					i--;
 					continue;
 				}
@@ -311,10 +317,10 @@ void player_collision_model()
 				}
 			}
 			
-			if (sprite[i].kind == '$')
+			if (enemy[i].kind == '$')
 			{
 				score += 100;
-				remove_sprite(i);
+				remove_enemy(i);
 				i--;
 				continue;
 			}
@@ -322,21 +328,21 @@ void player_collision_model()
 	}
 }
 
-void remove_sprite(int i) 
+void remove_enemy(int i) 
 {
-	sprites_count--;
-	sprite[i] = sprite[sprites_count];
-	if (sprites_count == 0) 
+	enemies_count--;
+	enemy[i] = enemy[enemies_count];
+	if (enemies_count == 0) 
 	{
-		free(sprite);
-		sprite = nullptr;
+		free(enemy);
+		enemy = nullptr;
 	}
 	else
 	{
-		GameObject* temp = (GameObject*)realloc(sprite, sizeof(*sprite) * sprites_count);
+		GameObject* temp = (GameObject*)realloc(enemy, sizeof(*enemy) * enemies_count);
 		if (temp != nullptr)
 		{
-			sprite = temp;
+			enemy = temp;
 		}
 	}	
 }
@@ -358,9 +364,9 @@ void scroll_map(float dx)
 	{
 		background_elem[i].x += dx;
 	}
-	for (int i = 0; i < sprites_count; i++)
+	for (int i = 0; i < enemies_count; i++)
 	{
-		sprite[i].x += dx;
+		enemy[i].x += dx;
 	}
 }
 
@@ -413,11 +419,11 @@ void vertical_move_object(GameObject *obj)
 				obj->is_flying = false;
 			}
 			
-			if ((background_elem[i].kind == '?') && (obj[0].vertical_speed < 0) && (obj == &player))
+			if ((background_elem[i].kind == '?') && (obj->vertical_speed < 0) && (obj == &player))
 			{
 				background_elem[i].kind = '-';
-				init_object(add_new_sprite(), background_elem[i].x, background_elem[i].y-3, 3, 2, '$');
-				sprite[sprites_count - 1].vertical_speed = -0.7;
+				init_object(add_new_enemy(), background_elem[i].x, background_elem[i].y-3, 3, 2, '$');
+				enemy[enemies_count - 1].vertical_speed = -0.7;
 			}
 			
 			obj->y -= obj->vertical_speed;
