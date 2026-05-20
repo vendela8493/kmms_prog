@@ -107,6 +107,9 @@ int main()
 	}
 	while (GetKeyState(VK_ESCAPE) >= 0);
 	
+	free(background_elem);
+	free(sprite);
+	
 	return 0;
 }
 
@@ -133,14 +136,16 @@ void add_object_on_map(const GameObject& obj)
 GameObject *add_new_background_elem()
 {
 	background_elems_count++;
-	background_elem = (GameObject*)realloc(background_elem, sizeof(*background_elem) * background_elems_count);
+	GameObject* temp = (GameObject*)realloc(background_elem, sizeof(*background_elem) * background_elems_count);
+	if (temp != nullptr) background_elem = temp;
 	return background_elem + background_elems_count - 1;
 }
 
 GameObject *add_new_sprite()
 {
 	sprites_count++;
-	sprite = (GameObject*)realloc( sprite, sizeof(*sprite) * sprites_count );
+	GameObject* temp = (GameObject*)realloc( sprite, sizeof(*sprite) * sprites_count );
+	if (temp != nullptr) sprite = temp;
 	return sprite + sprites_count - 1;
 }
 
@@ -170,10 +175,13 @@ void create_level(int lvl)
 {
 	system("color 9F");
 	
+	free(background_elem);
 	background_elems_count = 0;
-	background_elem = (GameObject*)realloc(background_elem, 0);
+	background_elem = nullptr;
+	
+	free(sprite);
 	sprites_count = 0;
-	sprite = (GameObject*)realloc(sprite, 0);
+	sprite = nullptr;
 	
 	init_object(&player, 39, 10, 3, 3, '@');
 	score = 0;
@@ -318,7 +326,19 @@ void remove_sprite(int i)
 {
 	sprites_count--;
 	sprite[i] = sprite[sprites_count];
-	sprite = (GameObject*)realloc(sprite, sizeof(*sprite) * sprites_count);
+	if (sprites_count == 0) 
+	{
+		free(sprite);
+		sprite = nullptr;
+	}
+	else
+	{
+		GameObject* temp = (GameObject*)realloc(sprite, sizeof(*sprite) * sprites_count);
+		if (temp != nullptr)
+		{
+			sprite = temp;
+		}
+	}	
 }
 
 void scroll_map(float dx)
