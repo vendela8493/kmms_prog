@@ -7,9 +7,7 @@ class GameObject
 	public:
 		float x, y;
 		float width, height;
-		float vertical_speed, horizontal_speed;
 		char kind;
-		bool is_flying;
 
 		GameObject()
 		{
@@ -17,10 +15,7 @@ class GameObject
 			y = 0;
 			width = 0;
 			height = 0;
-			vertical_speed = 0;
-			horizontal_speed = 0.2;
 			kind = ' ';
-			is_flying = false;
 		}
 
 		void set_object_pos(float obj_pos_x, float obj_pos_y)
@@ -34,10 +29,39 @@ class GameObject
 			set_object_pos(init_x, init_y);
 			width = init_width;
 			height = init_height;
-			vertical_speed = 0;
-			horizontal_speed = 0.2;
 			kind = init_kind;
-			is_flying = false;
+		}
+		
+		bool check_collision(const GameObject& obj) const
+		{
+			return (x + width) > obj.x && x < (obj.x + obj.width) &&
+			(y + height) > obj.y && y < (obj.y + obj.height);
+		}
+};
+
+class MovingObject : public GameObject
+{
+	public:
+		float vertical_speed = 0;
+		float horizontal_speed = 0.2;
+		bool is_flying = false;
+
+		void init_object(float init_x, float init_y, float init_width, float init_height, char init_kind)
+		{
+			GameObject::init_object(init_x, init_y, init_width, init_height, init_kind);
+			vertical_speed = 0;
+		}
+
+		void vertical_move_object(const GameObject& obj)
+		{
+			vertical_speed += 0.05;
+			GameObject::set_object_pos(x, y + vertical_speed);
+
+			if (check_collision(obj))
+			{
+				y -= vertical_speed;
+				vertical_speed = 0;
+			}
 		}
 };
 
@@ -76,6 +100,11 @@ class GameMap
 				std::cout << map[j] << '\n';
 		}
 		
+		bool object_within_map(int x, int y)
+		{
+			return x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT;
+		}
+		
 		void add_object_on_map(const GameObject& obj)
 		{
 			int int_x = (int)round(obj.x);
@@ -98,14 +127,23 @@ class GameMap
 
 int main()
 {
-    GameObject player;
-
-    player.init_object(39, 10, 3, 3, '@');
-
 	GameMap game_map;
-    game_map.clear_map();
-	game_map.add_object_on_map(player);
-    game_map.show_map();
+	MovingObject player;
+    player.init_object(39, 10, 3, 3, '@');
+    GameObject back_ground_elem;
+    back_ground_elem.init_object(20, 13, 40, 5, '#');
+	
+	do
+	{
+		game_map.clear_map();
+		player.vertical_move_object(back_ground_elem);
+		game_map.add_object_on_map(back_ground_elem);
+		game_map.add_object_on_map(player);
+		game_map.show_map();
+		
+		Sleep(10);
+	}
+	while (GetKeyState(VK_ESCAPE) >= 0);
 	
     return 0;
 }
