@@ -1,3 +1,37 @@
+#include <iostream>
+#include <windows.h>
+
+class GameMap
+{
+private:
+    static const int MAP_HEIGHT = 25;
+    static const int MAP_WIDTH = 80;
+    char map[MAP_HEIGHT][MAP_WIDTH + 1];
+
+public:
+    void clear_map()
+    {
+        for (int i = 0; i < MAP_WIDTH; i++)
+            map[0][i] = ' ';
+        map[0][MAP_WIDTH] = '\0';
+        
+        for (int j = 1; j < MAP_HEIGHT; j++)
+            for (int k = 0; k < MAP_WIDTH + 1; k++)
+                map[j][k] = map[0][k];
+    }
+
+    void show_map()
+    {
+        COORD coord = { 0, 0 };
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+    
+        map[MAP_HEIGHT - 1][MAP_WIDTH - 1] = '\0';
+        
+        for (int j = 0; j < MAP_HEIGHT; j++)
+            std::cout << map[j] << '\n';
+    }
+};
+
 class GameObject
 {
 public:
@@ -45,5 +79,9 @@ int main()
 
     player.init_object(39, 10, 3, 3, '@');
 
+	GameMap game_map;
+    game_map.clear_map();
+    game_map.show_map();
+	
     return 0;
 }
