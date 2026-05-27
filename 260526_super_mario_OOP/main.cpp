@@ -1,45 +1,13 @@
 #include <iostream>
 #include <windows.h>
-
-class GameMap
-{
-private:
-    static const int MAP_HEIGHT = 25;
-    static const int MAP_WIDTH = 80;
-    char map[MAP_HEIGHT][MAP_WIDTH + 1];
-
-public:
-    void clear_map()
-    {
-        for (int i = 0; i < MAP_WIDTH; i++)
-            map[0][i] = ' ';
-        map[0][MAP_WIDTH] = '\0';
-        
-        for (int j = 1; j < MAP_HEIGHT; j++)
-            for (int k = 0; k < MAP_WIDTH + 1; k++)
-                map[j][k] = map[0][k];
-    }
-
-    void show_map()
-    {
-        COORD coord = { 0, 0 };
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-    
-        map[MAP_HEIGHT - 1][MAP_WIDTH - 1] = '\0';
-        
-        for (int j = 0; j < MAP_HEIGHT; j++)
-            std::cout << map[j] << '\n';
-    }
-};
+#include <cmath>
 
 class GameObject
 {
 public:
     float x, y;
     float width, height;
-    
     float vertical_speed, horizontal_speed;
-    
     char kind;
     bool is_flying;
 
@@ -73,6 +41,61 @@ public:
     }
 };
 
+class GameMap
+{
+private:
+    static const int MAP_HEIGHT = 25;
+    static const int MAP_WIDTH = 80;
+    char map[MAP_HEIGHT][MAP_WIDTH + 1];
+	
+	bool object_within_map(int x, int y) const
+    {
+        return x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT;
+    }
+	
+public:
+    void clear_map()
+    {
+        for (int i = 0; i < MAP_WIDTH; i++)
+            map[0][i] = ' ';
+        map[0][MAP_WIDTH] = '\0';
+        
+        for (int j = 1; j < MAP_HEIGHT; j++)
+            for (int k = 0; k < MAP_WIDTH + 1; k++)
+                map[j][k] = map[0][k];
+    }
+
+    void show_map()
+    {
+        COORD coord = { 0, 0 };
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+    
+        map[MAP_HEIGHT - 1][MAP_WIDTH - 1] = '\0';
+        
+        for (int j = 0; j < MAP_HEIGHT; j++)
+            std::cout << map[j] << '\n';
+    }
+	
+	void add_object_on_map(const GameObject& obj)
+    {
+        int int_x = (int)round(obj.x);
+        int int_y = (int)round(obj.y);
+        int int_width = (int)round(obj.width);
+        int int_height = (int)round(obj.height);
+
+        for (int i = int_x; i < (int_x + int_width); i++)
+        {
+            for (int j = int_y; j < (int_y + int_height); j++)
+            {
+                if (object_within_map(i, j))
+                {
+                    map[j][i] = obj.kind;
+                }
+            }
+        }
+    }
+};
+
 int main()
 {
     GameObject player;
@@ -81,6 +104,7 @@ int main()
 
 	GameMap game_map;
     game_map.clear_map();
+	game_map.add_object_on_map(player);
     game_map.show_map();
 	
     return 0;
