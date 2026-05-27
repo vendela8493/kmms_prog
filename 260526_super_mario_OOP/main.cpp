@@ -85,6 +85,36 @@ public:
     }
 };
 
+class Enemy : public MovingObject
+{
+	public:
+		void horizontal_move_object(GameObject* background_elems, int background_elems_count)
+		{
+			x += horizontal_speed;
+
+			for (int i = 0; i < background_elems_count; i++)
+			{
+				if (check_collision(background_elems[i]))
+				{
+					x -= horizontal_speed;
+					horizontal_speed = -horizontal_speed;
+					return;
+				}
+			}
+
+			if (kind == 'o')
+			{
+				Enemy tmp = *this;
+				tmp.vertical_move_object(background_elems, background_elems_count); 
+				if (tmp.is_flying)
+				{
+					x -= horizontal_speed;
+					horizontal_speed = -horizontal_speed;
+				}
+			}
+		}
+};
+
 class GameMap
 	{
 	private:
@@ -98,6 +128,8 @@ class GameMap
 		}
 		
 	public:
+		static int get_map_height() { return MAP_HEIGHT; }
+	
 		void clear_map()
 		{
 			for (int i = 0; i < MAP_WIDTH; i++)
@@ -139,7 +171,7 @@ class GameMap
 			}
 		}
 		
-		void scroll_map(float dx, Player& player, GameObject* background_elems, int background_elems_count)
+		void scroll_map(float dx, Player& player, GameObject* background_elems, int background_elems_count, Enemy* enemies, int enemy_count)
 		{
 			player.x -= dx;
 			for (int i = 0; i < background_elems_count; i++)
@@ -153,64 +185,111 @@ class GameMap
 			player.x += dx;
 			for (int i = 0; i < background_elems_count; i++)
 				background_elems[i].x += dx;
+			
+			for (int i = 0; i < enemy_count; i++)
+                enemies[i].x += dx;
 		}
 
-		void forward(Player& player, GameObject* background_elems, int background_elems_count)
+		void forward(Player& player, GameObject* background_elems, int background_elems_count, Enemy* enemies, int enemies_count)
 		{
 			if (GetKeyState('A') < 0) 
-				scroll_map(1, player, background_elems, background_elems_count);
+				scroll_map(1, player, background_elems, background_elems_count, enemies, enemies_count);
 		}
 
-		void back(Player& player, GameObject* background_elems, int background_elems_count)
+		void back(Player& player, GameObject* background_elems, int background_elems_count, Enemy* enemies, int enemies_count)
 		{
 			if (GetKeyState('D') < 0) 
-				scroll_map(-1, player, background_elems, background_elems_count);
+				scroll_map(-1, player, background_elems, background_elems_count, enemies, enemies_count);
 		}
 };
 
 class Level
 {
 	public:
-		void add_new_background_elem(GameObject*& background_elems, int& count, float x, float y, float w, float h, char k)
+		void add_new_background_elem(GameObject*& background_elems, int& background_elems_count, float x, float y, float width, float height, char kind)
 		{
-			GameObject* temp = new GameObject[count + 1];
-			for (int i = 0; i < count; i++)
+			GameObject* temp = new GameObject[background_elems_count + 1];
+			for (int i = 0; i < background_elems_count; i++)
 				temp[i] = background_elems[i];
 			
 			delete[] background_elems;
 			background_elems = temp;
 			
-			background_elems[count].init_object(x, y, w, h, k);
-			count++;
+			background_elems[background_elems_count].init_object(x, y, width, height, kind);
+			background_elems_count++;
 		}
 
-		void delete_background_elem(GameObject*& background_elems, int& count)
+		void add_new_enemy(Enemy*& enemies, int& enemies_count, float x, float y, float width, float height, char kind)
+        {
+            Enemy* temp = new Enemy[enemies_count + 1];
+            for (int i = 0; i < enemies_count; i++)
+                temp[i] = enemies[i];
+            
+            delete[] enemies;
+            enemies = temp;
+            
+            enemies[enemies_count].init_object(x, y, width, height, kind);
+            enemies_count++;
+        }
+		
+		void delete_background_elem(GameObject*& background_elems, int& background_elems_count)
 		{
 			delete[] background_elems;
 			background_elems = nullptr;
-			count = 0;
+			background_elems_count = 0;
 		}
 		
-		void create_level(Player& player, GameObject*& background_elems, int& count)
+		void delete_enemies(Enemy*& enemies, int& enemies_count)
+        {
+            delete[] enemies;
+            enemies = nullptr;
+            enemies_count = 0;
+        }
+
+        void remove_enemy(int index, Enemy*& enemies, int& enemies_count)
+        {
+            enemies_count--;
+            enemies[index] = enemies[enemies_count];
+            
+            if (enemies_count == 0)
+            {
+                delete[] enemies;
+                enemies = nullptr;
+            }
+            else
+            {
+                Enemy* temp = new Enemy[enemies_count];
+                for(int i=0; i < enemies_count; i++)
+					temp[i] = enemies[i];
+                delete[] enemies;
+                enemies = temp;
+            }
+		}
+		
+		void create_level(Player& player, GameObject*& background_elems, int& background_elems_count, Enemy*& enemies, int& enemies_count)
 		{
 			system("color 9F");
-			delete_background_elem(background_elems, count);
+			delete_background_elem(background_elems, background_elems_count);
+			delete_enemies(enemies, enemies_count);
 
 			player.init_object(39, 10, 3, 3, '@');
 
-			add_new_background_elem(background_elems, count, 20, 20, 40, 5, '#');
-			add_new_background_elem(background_elems, count, 30, 10, 5, 3, '?');
-			add_new_background_elem(background_elems, count, 50, 10, 5, 3, '?');
-			add_new_background_elem(background_elems, count, 60, 15, 40, 10, '#');
-			add_new_background_elem(background_elems, count, 60, 5, 10, 3, '-');
-			add_new_background_elem(background_elems, count, 70, 5, 5, 3, '?');
-			add_new_background_elem(background_elems, count, 75, 5, 5, 3, '-');
-			add_new_background_elem(background_elems, count, 80, 5, 5, 3, '?');
-			add_new_background_elem(background_elems, count, 85, 5, 10, 3, '-');
-			add_new_background_elem(background_elems, count, 100, 20, 20, 5, '#');
-			add_new_background_elem(background_elems, count, 120, 15, 10, 10, '#');
-			add_new_background_elem(background_elems, count, 150, 20, 40, 5, '#');
-			add_new_background_elem(background_elems, count, 210, 15, 10, 10, '+');
+			add_new_background_elem(background_elems, background_elems_count, 20, 20, 40, 5, '#');
+			add_new_background_elem(background_elems, background_elems_count, 30, 10, 5, 3, '?');
+			add_new_background_elem(background_elems, background_elems_count, 50, 10, 5, 3, '?');
+			add_new_background_elem(background_elems, background_elems_count, 60, 15, 40, 10, '#');
+			add_new_background_elem(background_elems, background_elems_count, 60, 5, 10, 3, '-');
+			add_new_background_elem(background_elems, background_elems_count, 70, 5, 5, 3, '?');
+			add_new_background_elem(background_elems, background_elems_count, 75, 5, 5, 3, '-');
+			add_new_background_elem(background_elems, background_elems_count, 80, 5, 5, 3, '?');
+			add_new_background_elem(background_elems, background_elems_count, 85, 5, 10, 3, '-');
+			add_new_background_elem(background_elems, background_elems_count, 100, 20, 20, 5, '#');
+			add_new_background_elem(background_elems, background_elems_count, 120, 15, 10, 10, '#');
+			add_new_background_elem(background_elems, background_elems_count, 150, 20, 40, 5, '#');
+			add_new_background_elem(background_elems, background_elems_count, 210, 15, 10, 10, '+');
+			
+			add_new_enemy(enemies, enemies_count, 25, 10, 3, 2, 'o');
+            add_new_enemy(enemies, enemies_count, 80, 10, 3, 2, 'o');
 		}
 };
 int main()
@@ -220,17 +299,21 @@ int main()
 	
 	GameObject* background_elems = nullptr;
 	int background_elems_count = 0;
+	
+	Enemy* enemies = nullptr;
+    int enemies_count = 0;
+	
 	Level level;
 	
-    level.create_level(player, background_elems, background_elems_count);
+    level.create_level(player, background_elems, background_elems_count, enemies, enemies_count);
 	
 	do
 	{
 		game_map.clear_map();
 		
 		player.jump();
-		game_map.forward(player, background_elems, background_elems_count);
-		game_map.back(player, background_elems, background_elems_count);
+		game_map.forward(player, background_elems, background_elems_count, enemies, enemies_count);
+		game_map.back(player, background_elems, background_elems_count, enemies, enemies_count);
 		
 		player.vertical_move_object(background_elems, background_elems_count);
 		
@@ -238,6 +321,21 @@ int main()
         {
             game_map.add_object_on_map(background_elems[i]);
         }
+		
+		for (int i = 0; i < enemies_count; i++)
+        {
+            enemies[i].vertical_move_object(background_elems, background_elems_count);
+            enemies[i].horizontal_move_object(background_elems, background_elems_count);
+            
+            if (enemies[i].y > GameMap::get_map_height())
+            {
+                level.remove_enemy(i, enemies, enemies_count);
+                i--;
+                continue;
+            }
+            game_map.add_object_on_map(enemies[i]);
+        }
+		
 		game_map.add_object_on_map(player);
 		game_map.show_map();
 		
@@ -246,6 +344,7 @@ int main()
 	while (GetKeyState(VK_ESCAPE) >= 0);
 	
 	level.delete_background_elem(background_elems, background_elems_count);
+	level.delete_enemies(enemies, enemies_count);
 
     return 0;
 }
