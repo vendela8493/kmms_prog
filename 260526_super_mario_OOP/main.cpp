@@ -65,6 +65,16 @@ class MovingObject : public GameObject
 		}
 };
 
+class Player : public MovingObject
+{
+public:
+    void jump()
+    {
+        if (!is_flying && GetKeyState(VK_SPACE) < 0)
+            vertical_speed = -1;
+    }
+};
+
 class GameMap
 	{
 	private:
@@ -100,11 +110,6 @@ class GameMap
 				std::cout << map[j] << '\n';
 		}
 		
-		bool object_within_map(int x, int y)
-		{
-			return x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT;
-		}
-		
 		void add_object_on_map(const GameObject& obj)
 		{
 			int int_x = (int)round(obj.x);
@@ -123,12 +128,27 @@ class GameMap
 				}
 			}
 		}
+		
+		void scroll_map(GameObject& obj, float dx)
+		{
+			obj.x += dx;
+		}
+
+		void forward(GameObject& obj)
+		{
+			if (GetKeyState('A') < 0) scroll_map(obj, 1);
+		}
+
+		void back(GameObject& obj)
+		{
+			if (GetKeyState('D') < 0) scroll_map(obj, -1);
+		}
 };
 
 int main()
 {
 	GameMap game_map;
-	MovingObject player;
+	Player player;
     player.init_object(39, 10, 3, 3, '@');
     GameObject back_ground_elem;
     back_ground_elem.init_object(20, 13, 40, 5, '#');
@@ -136,7 +156,13 @@ int main()
 	do
 	{
 		game_map.clear_map();
+		
+		player.jump();
+		game_map.forward(back_ground_elem);
+		game_map.back(back_ground_elem);
+		
 		player.vertical_move_object(back_ground_elem);
+		
 		game_map.add_object_on_map(back_ground_elem);
 		game_map.add_object_on_map(player);
 		game_map.show_map();
