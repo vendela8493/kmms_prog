@@ -167,8 +167,10 @@ GameObject *add_new_enemy(GameObject*& enemy, int& enemies_count)
 
 bool check_collision(const GameObject& obj_1, const GameObject& obj_2)
 {
-	return ((obj_1.x + obj_1.width) > obj_2.x) && (obj_1.x < (obj_2.x + obj_2.width)) &&
-		   ((obj_1.y + obj_1.height) > obj_2.y) && (obj_1.y < (obj_2.y + obj_2.height));
+	return (obj_1.x + obj_1.width) > obj_2.x && 
+			obj_1.x < (obj_2.x + obj_2.width) &&
+			(obj_1.y + obj_1.height) > obj_2.y && 
+			obj_1.y < (obj_2.y + obj_2.height);
 }
 
 void clear_map(char** map, const int MAP_HEIGHT, const int MAP_WIDTH)
