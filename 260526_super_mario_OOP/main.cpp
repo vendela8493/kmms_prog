@@ -222,15 +222,77 @@ public:
     int getHeight() const { return height; }
 };
 	
-	
+class Level {
+private:
+	GameObject* background_elem;
+	int background_elems_count;
 
-GameObject* add_new_background_elem(GameObject*& background_elem, int& background_elems_count);
+public:
+	Level() : background_elem(nullptr), background_elems_count(0) {}
+
+	~Level() {
+		clear();
+	}
+
+	void clear() {
+		free(background_elem);
+		background_elem = nullptr;
+		background_elems_count = 0;
+	}
+
+	void addBackgroundElem(const GameObject& elem) {
+		background_elems_count++;
+		GameObject* temp = (GameObject*)realloc(background_elem, sizeof(GameObject) * background_elems_count);
+		if (temp != nullptr) {
+			background_elem = temp;
+		}
+		background_elem[background_elems_count - 1] = elem;
+	}
+
+	void load(int current_level) {
+		clear();
+
+		if (current_level == 1) {
+			addBackgroundElem(GameObject(20, 20, 40, 5, '#'));
+			addBackgroundElem(GameObject(30, 10, 5, 3, '?'));
+			addBackgroundElem(GameObject(50, 10, 5, 3, '?'));
+			addBackgroundElem(GameObject(60, 15, 40, 10, '#'));
+			addBackgroundElem(GameObject(60, 5, 10, 3, '-'));
+			addBackgroundElem(GameObject(70, 5, 5, 3, '?'));
+			addBackgroundElem(GameObject(75, 5, 5, 3, '-'));
+			addBackgroundElem(GameObject(80, 5, 5, 3, '?'));
+			addBackgroundElem(GameObject(85, 5, 10, 3, '-'));
+			addBackgroundElem(GameObject(100, 20, 20, 5, '#'));
+			addBackgroundElem(GameObject(120, 15, 10, 10, '#'));
+			addBackgroundElem(GameObject(150, 20, 40, 5, '#'));
+			addBackgroundElem(GameObject(210, 15, 10, 10, '+'));
+		}
+		else if (current_level == 2) {
+			addBackgroundElem(GameObject(20, 20, 40, 5, '#'));
+			addBackgroundElem(GameObject(60, 15, 10, 10, '#'));
+			addBackgroundElem(GameObject(80, 20, 20, 5, '#'));
+			addBackgroundElem(GameObject(120, 15, 10, 10, '#'));
+			addBackgroundElem(GameObject(150, 20, 40, 5, '#'));
+			addBackgroundElem(GameObject(210, 15, 10, 10, '+'));
+		}
+		else if (current_level == 3) {
+			addBackgroundElem(GameObject(20, 20, 40, 5, '#'));
+			addBackgroundElem(GameObject(80, 20, 15, 5, '#'));
+			addBackgroundElem(GameObject(120, 15, 15, 10, '#'));
+			addBackgroundElem(GameObject(160, 10, 15, 15, '+'));
+		}
+	}
+
+	GameObject* getElements() { return background_elem; }
+	int getCount() const { return background_elems_count; }
+};
+
 Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count);
-void create_level(int current_level, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score);
-void kill_player(Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score, int& current_level);
-void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, GameObject*& background_elem, int& background_elems_count, int& score, int& current_level);
+void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score);
+void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level);
+void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level);
 void remove_enemy(int i, Enemy*& enemy, int& enemies_count);
-void scroll_map(float dx, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int enemies_count);
+void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemies_count);
 void set_cursor(int x, int y);
 
 int main()
@@ -242,8 +304,7 @@ int main()
 	
 	Player player;
 	
-	GameObject* background_elem = nullptr;
-	int background_elems_count = 0;
+	Level level;
 	
 	Enemy* enemy = nullptr;
 	int enemies_count = 0;
@@ -253,39 +314,34 @@ int main()
 	int max_level = 3;
 
 	
-	create_level(current_level, player, background_elem, background_elems_count, enemy, enemies_count, score);
+	create_level(current_level, player, level, enemy, enemies_count, score);
 	
 	do 
 	{
 		map.clear();
 		
 		if (GetKeyState(VK_SPACE) < 0)
-		{
 			player.jump();
-		}
-		if (GetKeyState('A') < 0)
-		{
-			scroll_map(1, player, background_elem, background_elems_count, enemy, enemies_count);
-		}
-		if (GetKeyState('D') < 0)
-		{
-			scroll_map(-1, player, background_elem, background_elems_count, enemy, enemies_count);
-		}
 		
-		if (player.getY() > MAP_HEIGHT)
-		{
-			kill_player(player, background_elem, background_elems_count, enemy, enemies_count, score, current_level);
+		if (GetKeyState('A') < 0)
+			scroll_map(1, player, level, enemy, enemies_count);
+
+		if (GetKeyState('D') < 0)
+			scroll_map(-1, player, level, enemy, enemies_count);
+		
+		if (player.getY() > MAP_HEIGHT) {
+			kill_player(player, level, enemy, enemies_count, score, current_level);
 			continue;
 		}
 		
 		float hit_x = 0, hit_y = 0;
 		int hit_idx = -1;
 		
-		char hit = player.moveAndCheck(background_elem, background_elems_count, hit_x, hit_y, hit_idx);
+		char hit = player.moveAndCheck(level.getElements(), level.getCount(), hit_x, hit_y, hit_idx);
 		
 		if (hit == '?') 
 		{
-			background_elem[hit_idx].setKind('-');
+			level.getElements()[hit_idx].setKind('-');
 			*add_new_enemy(enemy, enemies_count) = Enemy(hit_x, hit_y - 3, 3, 2, '$');
 			enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
 		}
@@ -300,21 +356,21 @@ int main()
 					
 			system("color 2F");
 			Sleep(500); 
-			create_level(current_level, player, background_elem, background_elems_count, enemy, enemies_count, score);
+			create_level(current_level, player, level, enemy, enemies_count, score);
 			continue;
 		}
 	
 		
-		player_collision_model(player, enemy, enemies_count, background_elem, background_elems_count, score, current_level);
+		player_collision_model(player, enemy, enemies_count, level, score, current_level);
 		
-		for (int i = 0; i < background_elems_count; i++)
+		for (int i = 0; i < level.getCount(); i++)
 		{
-			map.addObject(background_elem[i]);
+			map.addObject(level.getElements()[i]);
 		}
 		
 		for (int i = 0; i < enemies_count; i++)
 		{
-			enemy[i].move(background_elem, background_elems_count);
+			enemy[i].move(level.getElements(), level.getCount());
 			
 			if (enemy[i].getY() > MAP_HEIGHT)
 			{
@@ -336,21 +392,9 @@ int main()
 	}
 	while (GetKeyState(VK_ESCAPE) >= 0);
 	
-	free(background_elem);
 	free(enemy);
 	
 	return 0;
-}
-
-GameObject *add_new_background_elem(GameObject*& background_elem, int& background_elems_count)
-{
-	background_elems_count++;
-	GameObject* temp = (GameObject*)realloc(background_elem, sizeof(*background_elem) * background_elems_count);
-	if (temp != nullptr)
-	{
-		background_elem = temp;
-	}
-	return &background_elem[background_elems_count - 1];
 }
 
 Enemy *add_new_enemy(Enemy*& enemy, int& enemies_count)
@@ -365,13 +409,11 @@ Enemy *add_new_enemy(Enemy*& enemy, int& enemies_count)
 	return &enemy[enemies_count - 1];
 }
 
-void create_level(int current_level, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score)
+void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score)
 {
 	system("color 9F");
 	
-	free(background_elem);
-	background_elems_count = 0;
-	background_elem = nullptr;
+	level.load(current_level);
 	
 	free(enemy);
 	enemies_count = 0;
@@ -380,35 +422,11 @@ void create_level(int current_level, Player& player, GameObject*& background_ele
 	player = Player(39, 10);
 	score = 0;
 	
-	if (current_level == 1)
-	{
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(20, 20, 40, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(30, 10, 5, 3, '?');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(50, 10, 5, 3, '?');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(60, 15, 40, 10, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(60, 5, 10, 3, '-');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(70, 5, 5, 3, '?');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(75, 5, 5, 3, '-');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(80, 5, 5, 3, '?');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(85, 5, 10, 3, '-');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(100, 20, 20, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(120, 15, 10, 10, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(150, 20, 40, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(210, 15, 10, 10, '+');
-		
+	if (current_level == 1) {
 		*add_new_enemy(enemy, enemies_count) = Enemy(25, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(80, 10, 3, 2, 'o');
 	}
-	
-	if (current_level == 2)
-	{
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(20, 20, 40, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(60, 15, 10, 10, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(80, 20, 20, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(120, 15, 10, 10, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(150, 20, 40, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(210, 15, 10, 10, '+');
-
+	else if (current_level == 2) {
 		*add_new_enemy(enemy, enemies_count) = Enemy(25, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(80, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(65, 10, 3, 2, 'o');
@@ -416,14 +434,7 @@ void create_level(int current_level, Player& player, GameObject*& background_ele
 		*add_new_enemy(enemy, enemies_count) = Enemy(160, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(175, 10, 3, 2, 'o');
 	}
-	
-	if (current_level == 3)
-	{
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(20, 20, 40, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(80, 20, 15, 5, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(120, 15, 15, 10, '#');
-		*add_new_background_elem(background_elem, background_elems_count) = GameObject(160, 10, 15, 15, '+');
-		
+	else if (current_level == 3) {
 		*add_new_enemy(enemy, enemies_count) = Enemy(25, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(50, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(80, 10, 3, 2, 'o');
@@ -433,14 +444,14 @@ void create_level(int current_level, Player& player, GameObject*& background_ele
 	}
 }
 
-void kill_player(Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score, int& current_level)
+void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level)
 {
 	system("color 4F");
 	Sleep(500);
-	create_level(current_level, player, background_elem, background_elems_count, enemy, enemies_count, score);
+	create_level(current_level, player, level, enemy, enemies_count, score);
 }
 
-void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, GameObject*& background_elem, int& background_elems_count, int& score, int& current_level)
+void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level)
 {
 	for (int i = 0; i < enemies_count; i++)
 	{
@@ -459,7 +470,7 @@ void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, G
 				}
 				else
 				{
-					kill_player(player, background_elem, background_elems_count, enemy, enemies_count, score, current_level);
+					kill_player(player, level, enemy, enemies_count, score, current_level);
 				}
 			}
 			
@@ -493,8 +504,11 @@ void remove_enemy(int i, Enemy*& enemy, int& enemies_count)
 	}	
 }
 
-void scroll_map(float dx, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int enemies_count)
+void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemies_count)
 {
+	GameObject* background_elem = level.getElements();
+    int background_elems_count = level.getCount();
+	
 	player.moveBy(-dx, 0);
 	for (int i = 0; i < background_elems_count; i++)
 	{
@@ -507,13 +521,10 @@ void scroll_map(float dx, Player& player, GameObject*& background_elem, int& bac
 	player.moveBy(dx, 0);
 	
 	for (int i = 0; i < background_elems_count; i++)
-	{
 		background_elem[i].moveBy(dx, 0);
-	}
+		
 	for (int i = 0; i < enemies_count; i++)
-	{
 		enemy[i].moveBy(dx, 0);
-	}
 }
 
 void set_cursor(int x, int y)
