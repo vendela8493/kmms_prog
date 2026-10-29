@@ -22,7 +22,10 @@ class GameObject {
 		char kind;
 	
 	public:	
-		GameObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' ');
+		GameObject(
+			float init_x = 0, float init_y = 0, float init_width = 1,
+			float init_height = 1, char init_kind = ' '
+		);
 
 		float get_x() const;
 		float get_y() const;
@@ -43,7 +46,10 @@ class MovingObject : public GameObject {
 		bool is_flying;
 		
 	public:
-		MovingObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' ');
+		MovingObject(
+			float init_x = 0, float init_y = 0, 
+			float init_width = 1, float init_height = 1, char init_kind = ' '
+		);
 		
 		virtual ~MovingObject();
 		
@@ -59,13 +65,16 @@ class MovingObject : public GameObject {
 
 class Player : public MovingObject {
 	public:
-		Player(float init_x = 0, float init_y = 0, float init_width = 3, float init_height = 3);
+		Player(
+			float init_x = 0, float init_y = 0,
+			float init_width = 3, float init_height = 3
+		);
 
 		void jump();
 		
 		char move_and_check(
-		GameObject* background_elem, int background_elems_count,
-		float& hit_x, float& hit_y, int& hit_index
+			GameObject* background_elem, int background_elems_count,
+			float& hit_x, float& hit_y, int& hit_index
 		);
 		
 		bool is_stomping(const GameObject& enemy) const;
@@ -73,7 +82,10 @@ class Player : public MovingObject {
 
 class Enemy : public MovingObject {
 	public:
-		Enemy(float init_x = 0, float init_y = 0, float init_width = 3, float init_height = 2, char init_kind = ENEMY);
+		Enemy(
+			float init_x = 0, float init_y = 0, 
+			float init_width = 3, float init_height = 2, char init_kind = ENEMY
+		);
 			
 		void move(GameObject* background_elem, int background_elems_count);
 		int handle_collision(const Player& player, int& score);
@@ -127,13 +139,36 @@ class Level {
 };
 
 Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count);
+
 void spawn_coin(float x, float y, Enemy*& enemy, int& enemies_count);
-void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score);
-void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level);
-void switch_level(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score);
-void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level);
+
+void create_level(
+	int current_level, Player& player, Level& level, 
+	Enemy*& enemy, int& enemies_count, int& score
+);
+
+void kill_player(
+	Player& player, Level& level, Enemy*& enemy,
+	int& enemies_count, int& score, int& current_level
+);
+
+void switch_level(
+	Player& player, Level& level, Enemy*& enemy,
+	int& enemies_count, int& score
+);
+
+void player_collision_model(
+	Player& player, Enemy*& enemy, int& enemies_count,
+	Level& level, int& score, int& current_level
+);
+
 void remove_enemy(int i, Enemy*& enemy, int& enemies_count);
-void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemies_count);
+
+void scroll_map(
+	float dx, Player& player, Level& level,
+	Enemy*& enemy, int enemies_count
+);
+
 void set_cursor(int x, int y);
 
 int main()
@@ -160,14 +195,17 @@ int main()
 	do {
 		map.clear();
 		
-		if (GetKeyState(VK_SPACE) < 0)
+		if (GetKeyState(VK_SPACE) < 0) {
 			player.jump();
+		}
 		
-		if (GetKeyState('A') < 0)
+		if (GetKeyState('A') < 0) {
 			scroll_map(1, player, level, enemy, enemies_count);
+		}
 
-		if (GetKeyState('D') < 0)
+		if (GetKeyState('D') < 0) {
 			scroll_map(-1, player, level, enemy, enemies_count);
+		}
 		
 		if (player.get_y() > MAP_HEIGHT) {
 			kill_player(player, level, enemy, enemies_count, score, current_level);
@@ -177,7 +215,10 @@ int main()
 		float hit_x = 0, hit_y = 0;
 		int hit_idx = -1;
 		
-		char hit = player.move_and_check(level.get_elements(), level.get_count(), hit_x, hit_y, hit_idx);
+		char hit = player.move_and_check(
+			level.get_elements(), level.get_count(),
+			hit_x, hit_y, hit_idx
+		);
 		
 		if (hit == FULL_BOX) {
 			level.hit_block(hit_idx);
@@ -233,7 +274,10 @@ void spawn_coin(float x, float y, Enemy*& enemy, int& enemies_count) {
 	enemy[enemies_count - 1].set_vertical_speed(-0.7f);
 }
 
-void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score) {
+void create_level(
+	int current_level, Player& player, Level& level, 
+	Enemy*& enemy, int& enemies_count, int& score
+) {
 	system("color 9F");
 	
 	level.load(current_level);
@@ -266,23 +310,30 @@ void create_level(int current_level, Player& player, Level& level, Enemy*& enemy
 	}
 }
 
-void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level) {
+void kill_player(
+	Player& player, Level& level, Enemy*& enemy,
+	int& enemies_count, int& score, int& current_level
+) {
 	system("color 4F");
 	Sleep(500);
 	score = 0;
 	create_level(current_level, player, level, enemy, enemies_count, score);
 }
 
-void switch_level(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score)
-{
+void switch_level(
+	Player& player, Level& level,
+	Enemy*& enemy, int& enemies_count, int& score
+) {
 	level.next_level();
 	system("color 2F");
 	Sleep(500);
 	create_level(level.get_current_level(), player, level, enemy, enemies_count, score);
 }
 
-void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level) {
-	
+void player_collision_model(
+	Player& player, Enemy*& enemy, int& enemies_count, 
+	Level& level, int& score, int& current_level
+) {
 	for (int i = 0; i < enemies_count; i++) {
 		if (player.check_collision(enemy[i])) {
 			int result = enemy[i].handle_collision(player, score);
@@ -313,7 +364,10 @@ void remove_enemy(int i, Enemy*& enemy, int& enemies_count) {
 	}	
 }
 
-void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemies_count) {
+void scroll_map(
+	float dx, Player& player, Level& level,
+	Enemy*& enemy, int enemies_count
+) {
 	GameObject* background_elem = level.get_elements();
     int background_elems_count = level.get_count();
 	
@@ -326,11 +380,13 @@ void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemi
 	}
 	player.move_by(dx, 0);
 	
-	for (int i = 0; i < background_elems_count; i++)
+	for (int i = 0; i < background_elems_count; i++) {
 		background_elem[i].move_by(dx, 0);
+	}
 		
-	for (int i = 0; i < enemies_count; i++)
+	for (int i = 0; i < enemies_count; i++) {
 		enemy[i].move_by(dx, 0);
+	}
 }
 
 void set_cursor(int x, int y) {
@@ -340,7 +396,10 @@ void set_cursor(int x, int y) {
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
-GameObject::GameObject(float init_x, float init_y, float init_width, float init_height, char init_kind) {
+GameObject::GameObject(
+	float init_x, float init_y,
+	float init_width, float init_height, char init_kind
+) {
 	x = init_x;
 	y = init_y;
 	width = init_width;
@@ -373,7 +432,10 @@ bool GameObject::check_collision(const GameObject& other) const {
 		   ((y + height) > other.y) && (y < (other.y + other.height));
 }
 
-MovingObject::MovingObject(float init_x, float init_y, float init_width, float init_height, char init_kind)
+MovingObject::MovingObject(
+	float init_x, float init_y, 
+	float init_width, float init_height, char init_kind
+)
 	: GameObject(init_x, init_y, init_width, init_height, init_kind) {
 	vertical_speed = 0;
 	horizontal_speed = 0.2f;
