@@ -155,6 +155,21 @@ public:
 			}
 		}
 	}
+	
+	int handleCollision(const Player& player, int& score) {
+		if (kind == 'o') {
+			if (player.isStomping(*this)) {
+				score += 50;
+				return 1; // враг раздавлен
+			} else {
+				return -1; // марио врезался сбоку
+			}
+		} else if (kind == '$') {
+			score += 100;
+			return 1;
+		}
+		return 0;
+	}
 };
 
 class Map {
@@ -456,25 +471,18 @@ void switch_level(Player& player, Level& level, Enemy*& enemy, int& enemies_coun
 }
 
 void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level) {
+	
 	for (int i = 0; i < enemies_count; i++) {
 		if (player.checkCollision(enemy[i])) {
-			if (enemy[i].getKind() == 'o') {
-				if (player.isStomping(enemy[i])) {
-					score += 50;
+			int result = enemy[i].handleCollision(player, score);
+			
+			if (result == 1) {
 					remove_enemy(i, enemy, enemies_count);
 					i--;
 					continue;
-				} else {
+			} else if (result == -1) {
 					kill_player(player, level, enemy, enemies_count, score, current_level);
 					return;
-				}
-			}
-			
-			if (enemy[i].getKind() == '$') {
-				score += 100;
-				remove_enemy(i, enemy, enemies_count);
-				i--;
-				continue;
 			}
 		}
 	}
