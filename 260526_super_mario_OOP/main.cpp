@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <new>
 #include <sstream>
 #include <windows.h>
 
@@ -47,6 +48,25 @@ public:
 		is_flying = false;
 	}
 	
+	virtual ~MovingObject() {}
+	
+	virtual void move(GameObject* background_elem, int background_elems_count) {
+		is_flying = true;
+		vertical_speed += 0.05f;
+		moveBy(0, vertical_speed);
+		
+		for (int i = 0; i < background_elems_count; i++) {
+			if (checkCollision(background_elem[i])) {
+				if (vertical_speed > 0) {
+					is_flying = false;
+				}
+				moveBy(0, -vertical_speed);
+				vertical_speed = 0;
+				break;
+			}
+		}
+	}
+	
 	float getVerticalSpeed() const { return vertical_speed; }
     void setVerticalSpeed(float speed) { vertical_speed = speed; }
     float getHorizontalSpeed() const { return horizontal_speed; }
@@ -65,12 +85,68 @@ public:
 			vertical_speed = -1.0f;
 		}
 	}
+	
+	char moveAndCheck(GameObject* background_elem, int background_elems_count, float& hit_x, float& hit_y, int& hit_index) {
+		is_flying = true;
+		vertical_speed += 0.05f;
+		moveBy(0, vertical_speed);
+
+		for (int i = 0; i < background_elems_count; i++) {
+			if (checkCollision(background_elem[i])) {
+				if (vertical_speed > 0) {
+					is_flying = false;
+				}
+
+				char hit_kind = ' ';
+
+				if (background_elem[i].getKind() == '?' && vertical_speed < 0) {
+					hit_kind = '?';
+					hit_x = background_elem[i].getX();
+					hit_y = background_elem[i].getY();
+					hit_index = i;
+				}
+
+				else if (background_elem[i].getKind() == '+') {
+					hit_kind = '+';
+				}
+
+				moveBy(0, -vertical_speed);
+				vertical_speed = 0;
+				return hit_kind;
+			}
+		}
+		return ' ';
+	}
 };
 
 class Enemy : public MovingObject {
 public:
 	Enemy(float init_x = 0, float init_y = 0, float init_width = 3, float init_height = 2, char init_kind = 'o')
 		: MovingObject(init_x, init_y, init_width, init_height, init_kind) {}
+		
+	void move(GameObject* background_elem, int background_elems_count) {
+
+		MovingObject::move(background_elem, background_elems_count);
+
+		moveBy(horizontal_speed, 0);
+
+		for (int i = 0; i < background_elems_count; i++) {
+			if (checkCollision(background_elem[i])) {
+				moveBy(-horizontal_speed, 0);
+				horizontal_speed = -horizontal_speed;
+				return;
+			}
+		}
+
+		if (kind == 'o') {
+			MovingObject tmp = *this;
+			tmp.MovingObject::move(background_elem, background_elems_count);
+			if (tmp.getIsFlying()) {
+				moveBy(-horizontal_speed, 0);
+				horizontal_speed = -horizontal_speed;
+			}
+		}
+	}
 };
 
 class Map {
@@ -151,13 +227,11 @@ public:
 GameObject* add_new_background_elem(GameObject*& background_elem, int& background_elems_count);
 Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count);
 void create_level(int current_level, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score);
-void horizontal_move_object(MovingObject* obj, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score, int& current_level, int max_level);
 void kill_player(Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score, int& current_level);
 void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, GameObject*& background_elem, int& background_elems_count, int& score, int& current_level);
 void remove_enemy(int i, Enemy*& enemy, int& enemies_count);
 void scroll_map(float dx, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int enemies_count);
 void set_cursor(int x, int y);
-void vertical_move_object(MovingObject* obj, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score, int& current_level, int max_level);
 
 int main()
 {
@@ -201,9 +275,36 @@ int main()
 		if (player.getY() > MAP_HEIGHT)
 		{
 			kill_player(player, background_elem, background_elems_count, enemy, enemies_count, score, current_level);
+			continue;
 		}
 		
-		vertical_move_object(&player, player, background_elem, background_elems_count, enemy, enemies_count, score, current_level, max_level);
+		float hit_x = 0, hit_y = 0;
+		int hit_idx = -1;
+		
+		char hit = player.moveAndCheck(background_elem, background_elems_count, hit_x, hit_y, hit_idx);
+		
+		if (hit == '?') 
+		{
+			background_elem[hit_idx].setKind('-');
+			*add_new_enemy(enemy, enemies_count) = Enemy(hit_x, hit_y - 3, 3, 2, '$');
+			enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
+		}
+		
+		else if (hit == '+')
+		{
+			current_level++;
+			if (current_level > max_level)
+			{
+				current_level = 1;
+			}
+					
+			system("color 2F");
+			Sleep(500); 
+			create_level(current_level, player, background_elem, background_elems_count, enemy, enemies_count, score);
+			continue;
+		}
+	
+		
 		player_collision_model(player, enemy, enemies_count, background_elem, background_elems_count, score, current_level);
 		
 		for (int i = 0; i < background_elems_count; i++)
@@ -213,8 +314,7 @@ int main()
 		
 		for (int i = 0; i < enemies_count; i++)
 		{
-			vertical_move_object(&enemy[i], player, background_elem, background_elems_count, enemy, enemies_count, score, current_level, max_level);
-			horizontal_move_object(&enemy[i], player, background_elem, background_elems_count, enemy, enemies_count, score, current_level, max_level);
+			enemy[i].move(background_elem, background_elems_count);
 			
 			if (enemy[i].getY() > MAP_HEIGHT)
 			{
@@ -261,6 +361,7 @@ Enemy *add_new_enemy(Enemy*& enemy, int& enemies_count)
 	{
 		enemy = temp;
 	}
+	new (&enemy[enemies_count - 1]) Enemy();
 	return &enemy[enemies_count - 1];
 }
 
@@ -329,30 +430,6 @@ void create_level(int current_level, Player& player, GameObject*& background_ele
 		*add_new_enemy(enemy, enemies_count) = Enemy(90, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(120, 10, 3, 2, 'o');
 		*add_new_enemy(enemy, enemies_count) = Enemy(130, 10, 3, 2, 'o');
-	}
-}
-
-void horizontal_move_object(MovingObject *obj, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score, int& current_level, int max_level)
-{
-	obj->moveBy(obj->getHorizontalSpeed(), 0);
-	
-	for (int i = 0; i < background_elems_count; i++)
-		if (obj->checkCollision(background_elem[i]))
-		{
-			obj->moveBy(-obj->getHorizontalSpeed(), 0);
-			obj->setHorizontalSpeed(-obj->getHorizontalSpeed());
-			return;
-		}
-	
-	if (obj->getKind() == 'o')
-	{
-		MovingObject tmp = *obj;
-		vertical_move_object(&tmp, player, background_elem, background_elems_count, enemy, enemies_count, score, current_level, max_level);
-		if (tmp.getIsFlying())
-		{
-			obj->moveBy(-obj->getHorizontalSpeed(), 0);
-			obj->setHorizontalSpeed(-obj->getHorizontalSpeed());
-		}
 	}
 }
 
@@ -445,46 +522,4 @@ void set_cursor(int x, int y)
 	coord.X = x;
 	coord.Y = y;
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
-
-void vertical_move_object(MovingObject *obj, Player& player, GameObject*& background_elem, int& background_elems_count, Enemy*& enemy, int& enemies_count, int& score, int& current_level, int max_level)
-{
-	obj->setIsFlying(true);
-	obj->setVerticalSpeed(obj->getVerticalSpeed() + 0.05f);
-	obj->moveBy(0, obj->getVerticalSpeed());
-	
-	for (int i = 0; i < background_elems_count; i++)
-	{
-		if (obj->checkCollision(background_elem[i]))
-		{
-			if (obj->getVerticalSpeed() > 0)
-			{
-				obj->setIsFlying(false);
-			}
-			
-			if ((background_elem[i].getKind() == '?') && (obj->getVerticalSpeed() < 0) && (obj == &player))
-			{
-				background_elem[i].setKind('-');
-				*add_new_enemy(enemy, enemies_count) = Enemy(background_elem[i].getX(), background_elem[i].getY() - 3, 3, 2, '$');
-				enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
-			}
-			
-			obj->moveBy(0, -obj->getVerticalSpeed());
-			obj->setVerticalSpeed(0);
-
-			if (background_elem[i].getKind() == '+')
-			{
-				current_level++;
-				if (current_level > max_level)
-				{
-					current_level = 1;
-				}
-				
-				system("color 2F");
-				Sleep(500); 
-				create_level(current_level, player, background_elem, background_elems_count, enemy, enemies_count, score);
-			}
-			break;
-		}
-	}
 }
