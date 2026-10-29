@@ -59,99 +59,24 @@ class MovingObject : public GameObject {
 
 class Player : public MovingObject {
 	public:
-		Player(float init_x = 0, float init_y = 0, float init_width = 3, float init_height = 3)
-			: MovingObject(init_x, init_y, init_width, init_height, MARIO) {}
+		Player(float init_x = 0, float init_y = 0, float init_width = 3, float init_height = 3);
 
-		void jump() {
-			if (!is_flying) {
-				vertical_speed = -1.0f;
-			}
-		}
+		void jump();
 		
 		char move_and_check(
 		GameObject* background_elem, int background_elems_count,
 		float& hit_x, float& hit_y, int& hit_index
-		) {
-			is_flying = true;
-			vertical_speed += 0.05f;
-			move_by(0, vertical_speed);
-
-			for (int i = 0; i < background_elems_count; i++) {
-				if (check_collision(background_elem[i])) {
-					char hit_kind = ' ';
-
-					if (background_elem[i].get_kind() == FULL_BOX && vertical_speed < 0) {
-						hit_kind = FULL_BOX;
-						hit_x = background_elem[i].get_x();
-						hit_y = background_elem[i].get_y();
-						hit_index = i;
-					} else if (background_elem[i].get_kind() == FINISH) {
-						hit_kind = FINISH;
-					}
-					
-					if (vertical_speed > 0) {
-						y = background_elem[i].get_y() - height;
-						is_flying = false;
-					} else if (vertical_speed < 0) {
-						y = background_elem[i].get_y() + background_elem[i].get_height();
-					}
-
-					vertical_speed = 0;
-					return hit_kind;
-				}
-			}
-			return ' ';
-		}
+		);
 		
-		bool is_stomping(const GameObject& enemy) const {
-			return is_flying && (vertical_speed > 0) &&
-				   ((y + height) <= (enemy.get_y() + enemy.get_height() * 0.5f + 1.0f));
-		}
+		bool is_stomping(const GameObject& enemy) const;
 };
 
 class Enemy : public MovingObject {
 	public:
-		Enemy(float init_x = 0, float init_y = 0, float init_width = 3, float init_height = 2, char init_kind = ENEMY)
-			: MovingObject(init_x, init_y, init_width, init_height, init_kind) {}
+		Enemy(float init_x = 0, float init_y = 0, float init_width = 3, float init_height = 2, char init_kind = ENEMY);
 			
-		void move(GameObject* background_elem, int background_elems_count) {
-
-			MovingObject::move(background_elem, background_elems_count);
-
-			move_by(horizontal_speed, 0);
-
-			for (int i = 0; i < background_elems_count; i++) {
-				if (check_collision(background_elem[i])) {
-					move_by(-horizontal_speed, 0);
-					horizontal_speed = -horizontal_speed;
-					return;
-				}
-			}
-
-			if (kind == ENEMY) {
-				MovingObject tmp = *this;
-				tmp.MovingObject::move(background_elem, background_elems_count);
-				if (tmp.get_is_flying()) {
-					move_by(-horizontal_speed, 0);
-					horizontal_speed = -horizontal_speed;
-				}
-			}
-		}
-		
-		int handle_collision(const Player& player, int& score) {
-			if (kind == ENEMY) {
-				if (player.is_stomping(*this)) {
-					score += 50;
-					return 1; // враг раздавлен
-				} else {
-					return -1; // марио врезался сбоку
-				}
-			} else if (kind == COIN) {
-				score += 100;
-				return 1;
-			}
-			return 0;
-		}
+		void move(GameObject* background_elem, int background_elems_count);
+		int handle_collision(const Player& player, int& score);
 };
 
 class Map {
@@ -160,65 +85,20 @@ class Map {
 		int height;
 		char** grid;
 		
-		bool is_within(int x, int y) const {
-			return (x >= 0 && x < width && y >= 0 && y < height);
-		}
-			
+		bool is_within(int x, int y) const;
+		
 	public:
-		Map(int w = 80, int h = 25): width(w), height(h) {
-			grid = new char*[height];
-			
-			for (int i = 0; i < height; i++)
-				grid[i] = new char[width + 1];
-		}
+		Map(int w = 80, int h = 25);
 		
-		~Map() {
-			for (int i = 0; i < height; i++)
-				delete[] grid[i];
-			
-			delete[] grid;
-		}
+		~Map();
 		
-		void clear() {
-			for (int i = 0; i < width; i++)
-				grid[0][i] = ' ';
-			
-			grid[0][width] = '\0';
-			
-			for (int j = 1; j < height; j++)
-				for (int k = 0; k < width + 1; k++)
-					grid[j][k] = grid[0][k];
-		}
-		
-		void add_object(const GameObject& obj) {
-			int int_x = (int)round(obj.get_x());
-			int int_y = (int)round(obj.get_y());
-			int int_width = (int)round(obj.get_width());
-			int int_height = (int)round(obj.get_height());
+		void clear();
+		void add_object(const GameObject& obj);
+		void show_score(int score);
+		void render() const;
 
-			for (int i = int_x; i < (int_x + int_width); i++) 
-				for (int j = int_y; j < (int_y + int_height); j++) 
-					if (is_within(i, j)) 
-						grid[j][i] = obj.get_kind();
-		}
-		
-		void show_score(int score) {
-			std::ostringstream ss;
-			ss << "Score: " << score;
-			std::string text = ss.str();
-			for (size_t i = 0; i < text.length() && (i + 5) < (size_t)width; i++) 
-				grid[1][i + 5] = text[i];
-		}
-
-		void render() const {
-			grid[height - 1][width - 1] = '\0';
-			
-			for (int j = 0; j < height; j++) 
-				std::cout << grid[j] << '\n';
-		}
-
-		int get_width() const { return width; }
-		int get_height() const { return height; }
+		int get_width() const;
+		int get_height() const;
 };
 	
 class Level {
@@ -229,85 +109,21 @@ class Level {
 		int max_level;
 
 	public:
-		Level(int init_level = 1, int init_max = 3) :
-			background_elem(nullptr), background_elems_count(0),
-			current_level(init_level), max_level(init_max) {}
+		Level(int init_level = 1, int init_max = 3);
+		~Level();
 
-		~Level() {
-			clear();
-		}
+		void clear();
+		void add_background_elem(const GameObject& elem);
+		void next_level();
 
-		void clear() {
-			delete[] background_elem;
-			background_elem = nullptr;
-			background_elems_count = 0;
-		}
+		int get_current_level() const;
+		int get_max_level() const;
 
-		void add_background_elem(const GameObject& elem) {
-			GameObject* temp = new GameObject[background_elems_count + 1];
-			for (int i = 0; i < background_elems_count; i++) {
-				temp[i] = background_elem[i];
-			}
-			temp[background_elems_count] = elem;
-			delete[] background_elem;
-			background_elem = temp;
-			background_elems_count++;
-		}
+		void load(int level_num);
 		
-		void next_level() {
-			current_level++;
-			if (current_level > max_level) {
-				current_level = 1;
-			}
-		}
-
-		int get_current_level() const { return current_level; }
-		int get_max_level() const { return max_level; }
-
-		void load(int level_num) {
-			current_level = level_num;
-			clear();
-
-			if (current_level == 1) {
-				add_background_elem(GameObject(20, 20, 40, 5, PLATFORM));
-				add_background_elem(GameObject(30, 10, 5, 3, FULL_BOX));
-				add_background_elem(GameObject(50, 10, 5, 3, FULL_BOX));
-				add_background_elem(GameObject(60, 15, 40, 10, PLATFORM));
-				add_background_elem(GameObject(60, 5, 10, 3, BOX));
-				add_background_elem(GameObject(70, 5, 5, 3, FULL_BOX));
-				add_background_elem(GameObject(75, 5, 5, 3, BOX));
-				add_background_elem(GameObject(80, 5, 5, 3, FULL_BOX));
-				add_background_elem(GameObject(85, 5, 10, 3, BOX));
-				add_background_elem(GameObject(100, 20, 20, 5, PLATFORM));
-				add_background_elem(GameObject(120, 15, 10, 10, PLATFORM));
-				add_background_elem(GameObject(150, 20, 40, 5, PLATFORM));
-				add_background_elem(GameObject(210, 15, 10, 10, FINISH));
-			}
-			else if (current_level == 2) {
-				add_background_elem(GameObject(20, 20, 40, 5, PLATFORM));
-				add_background_elem(GameObject(60, 15, 10, 10, PLATFORM));
-				add_background_elem(GameObject(80, 20, 20, 5, PLATFORM));
-				add_background_elem(GameObject(120, 15, 10, 10, PLATFORM));
-				add_background_elem(GameObject(150, 20, 40, 5, PLATFORM));
-				add_background_elem(GameObject(210, 15, 10, 10, FINISH));			}
-			else if (current_level == 3) {
-				add_background_elem(GameObject(20, 20, 40, 5, PLATFORM));
-				add_background_elem(GameObject(80, 20, 15, 5, PLATFORM));
-				add_background_elem(GameObject(120, 15, 15, 10, PLATFORM));
-				add_background_elem(GameObject(160, 10, 15, 15, FINISH));
-			}
-		}
-
-		GameObject* get_elements() { return background_elem; }
-		int get_count() const { return background_elems_count; }
-		
-		void hit_block(int index) {
-			if (index >= 0 && index < background_elems_count) {
-				if (background_elem[index].get_kind() == FULL_BOX) {
-					background_elem[index].set_kind(BOX);
-				}
-			}
-		}
+		GameObject* get_elements();
+		int get_count() const;
+		void hit_block(int index);
 };
 
 Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count);
@@ -592,3 +408,239 @@ float MovingObject::get_horizontal_speed() const { return horizontal_speed; }
 void MovingObject::set_horizontal_speed(float speed) { horizontal_speed = speed; }
 bool MovingObject::get_is_flying() const { return is_flying; }
 void MovingObject::set_is_flying(bool flying) { is_flying = flying; }
+
+Player::Player(float init_x, float init_y, float init_width, float init_height)
+	: MovingObject(init_x, init_y, init_width, init_height, MARIO) {}
+
+void Player::jump() {
+	if (!is_flying) {
+		vertical_speed = -1.0f;
+	}
+}
+
+char Player::move_and_check(
+	GameObject* background_elem, int background_elems_count,
+	float& hit_x, float& hit_y, int& hit_index
+) {
+	is_flying = true;
+	vertical_speed += 0.05f;
+	move_by(0, vertical_speed);
+
+	for (int i = 0; i < background_elems_count; i++) {
+		if (check_collision(background_elem[i])) {
+			char hit_kind = ' ';
+
+			if (background_elem[i].get_kind() == FULL_BOX && vertical_speed < 0) {
+				hit_kind = FULL_BOX;
+				hit_x = background_elem[i].get_x();
+				hit_y = background_elem[i].get_y();
+				hit_index = i;
+			} else if (background_elem[i].get_kind() == FINISH) {
+				hit_kind = FINISH;
+			}
+			
+			if (vertical_speed > 0) {
+				y = background_elem[i].get_y() - height;
+				is_flying = false;
+			} else if (vertical_speed < 0) {
+				y = background_elem[i].get_y() + background_elem[i].get_height();
+			}
+
+			vertical_speed = 0;
+			return hit_kind;
+		}
+	}
+	return ' ';
+}
+
+bool Player::is_stomping(const GameObject& enemy) const {
+	return is_flying && (vertical_speed > 0) &&
+		   ((y + height) <= (enemy.get_y() + enemy.get_height() * 0.5f + 1.0f));
+}
+
+Enemy::Enemy(float init_x, float init_y, float init_width, float init_height, char init_kind)
+	: MovingObject(init_x, init_y, init_width, init_height, init_kind) {}
+
+void Enemy::move(GameObject* background_elem, int background_elems_count) {
+	MovingObject::move(background_elem, background_elems_count);
+
+	move_by(horizontal_speed, 0);
+
+	for (int i = 0; i < background_elems_count; i++) {
+		if (check_collision(background_elem[i])) {
+			move_by(-horizontal_speed, 0);
+			horizontal_speed = -horizontal_speed;
+			return;
+		}
+	}
+
+	if (kind == ENEMY) {
+		MovingObject tmp = *this;
+		tmp.MovingObject::move(background_elem, background_elems_count);
+		if (tmp.get_is_flying()) {
+			move_by(-horizontal_speed, 0);
+			horizontal_speed = -horizontal_speed;
+		}
+	}
+}
+
+int Enemy::handle_collision(const Player& player, int& score) {
+	if (kind == ENEMY) {
+		if (player.is_stomping(*this)) {
+			score += 50;
+			return 1;
+		} else {
+			return -1;
+		}
+	} else if (kind == COIN) {
+		score += 100;
+		return 1;
+	}
+	return 0;
+}
+
+Map::Map(int w, int h) : width(w), height(h) {
+	grid = new char*[height];
+	for (int i = 0; i < height; i++) {
+		grid[i] = new char[width + 1];
+	}
+}
+
+Map::~Map() {
+	for (int i = 0; i < height; i++) {
+		delete[] grid[i];
+	}
+	delete[] grid;
+}
+
+bool Map::is_within(int x, int y) const {
+	return (x >= 0 && x < width && y >= 0 && y < height);
+}
+
+void Map::clear() {
+	for (int i = 0; i < width; i++) {
+		grid[0][i] = ' ';
+	}
+	grid[0][width] = '\0';
+	
+	for (int j = 1; j < height; j++) {
+		for (int k = 0; k < width + 1; k++) {
+			grid[j][k] = grid[0][k];
+		}
+	}
+}
+
+void Map::add_object(const GameObject& obj) {
+	int int_x = (int)round(obj.get_x());
+	int int_y = (int)round(obj.get_y());
+	int int_width = (int)round(obj.get_width());
+	int int_height = (int)round(obj.get_height());
+
+	for (int i = int_x; i < (int_x + int_width); i++) {
+		for (int j = int_y; j < (int_y + int_height); j++) {
+			if (is_within(i, j)) {
+				grid[j][i] = obj.get_kind();
+			}
+		}
+	}
+}
+
+void Map::show_score(int score) {
+	std::ostringstream ss;
+	ss << "Score: " << score;
+	std::string text = ss.str();
+	for (size_t i = 0; i < text.length() && (i + 5) < (size_t)width; i++) {
+		grid[1][i + 5] = text[i];
+	}
+}
+
+void Map::render() const {
+	grid[height - 1][width - 1] = '\0';
+	for (int j = 0; j < height; j++) {
+		std::cout << grid[j] << '\n';
+	}
+}
+
+int Map::get_width() const { return width; }
+int Map::get_height() const { return height; }
+
+Level::Level(int init_level, int init_max)
+	: background_elem(nullptr), background_elems_count(0),
+	  current_level(init_level), max_level(init_max) {}
+
+Level::~Level() {
+	clear();
+}
+
+void Level::clear() {
+	delete[] background_elem;
+	background_elem = nullptr;
+	background_elems_count = 0;
+}
+
+void Level::add_background_elem(const GameObject& elem) {
+	GameObject* temp = new GameObject[background_elems_count + 1];
+	for (int i = 0; i < background_elems_count; i++) {
+		temp[i] = background_elem[i];
+	}
+	temp[background_elems_count] = elem;
+	delete[] background_elem;
+	background_elem = temp;
+	background_elems_count++;
+}
+
+void Level::next_level() {
+	current_level++;
+	if (current_level > max_level) {
+		current_level = 1;
+	}
+}
+
+int Level::get_current_level() const { return current_level; }
+int Level::get_max_level() const { return max_level; }
+
+void Level::load(int level_num) {
+	current_level = level_num;
+	clear();
+
+	if (current_level == 1) {
+		add_background_elem(GameObject(20, 20, 40, 5, PLATFORM));
+		add_background_elem(GameObject(30, 10, 5, 3, FULL_BOX));
+		add_background_elem(GameObject(50, 10, 5, 3, FULL_BOX));
+		add_background_elem(GameObject(60, 15, 40, 10, PLATFORM));
+		add_background_elem(GameObject(60, 5, 10, 3, BOX));
+		add_background_elem(GameObject(70, 5, 5, 3, FULL_BOX));
+		add_background_elem(GameObject(75, 5, 5, 3, BOX));
+		add_background_elem(GameObject(80, 5, 5, 3, FULL_BOX));
+		add_background_elem(GameObject(85, 5, 10, 3, BOX));
+		add_background_elem(GameObject(100, 20, 20, 5, PLATFORM));
+		add_background_elem(GameObject(120, 15, 10, 10, PLATFORM));
+		add_background_elem(GameObject(150, 20, 40, 5, PLATFORM));
+		add_background_elem(GameObject(210, 15, 10, 10, FINISH));
+	}
+	else if (current_level == 2) {
+		add_background_elem(GameObject(20, 20, 40, 5, PLATFORM));
+		add_background_elem(GameObject(60, 15, 10, 10, PLATFORM));
+		add_background_elem(GameObject(80, 20, 20, 5, PLATFORM));
+		add_background_elem(GameObject(120, 15, 10, 10, PLATFORM));
+		add_background_elem(GameObject(150, 20, 40, 5, PLATFORM));
+		add_background_elem(GameObject(210, 15, 10, 10, FINISH));
+	}
+	else if (current_level == 3) {
+		add_background_elem(GameObject(20, 20, 40, 5, PLATFORM));
+		add_background_elem(GameObject(80, 20, 15, 5, PLATFORM));
+		add_background_elem(GameObject(120, 15, 15, 10, PLATFORM));
+		add_background_elem(GameObject(160, 10, 15, 15, FINISH));
+	}
+}
+
+GameObject* Level::get_elements() { return background_elem; }
+int Level::get_count() const { return background_elems_count; }
+
+void Level::hit_block(int index) {
+	if (index >= 0 && index < background_elems_count) {
+		if (background_elem[index].get_kind() == FULL_BOX) {
+			background_elem[index].set_kind(BOX);
+		}
+	}
+}
