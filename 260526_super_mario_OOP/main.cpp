@@ -444,7 +444,6 @@ void create_level(int current_level, Player& player, Level& level, Enemy*& enemy
 	enemy = nullptr;
 	
 	player = Player(39, 10);
-	score = 0;
 	
 	if (current_level == 1) {
 		*add_new_enemy(enemy, enemies_count) = Enemy(25, 10, 3, 2, 'o');
@@ -471,6 +470,7 @@ void create_level(int current_level, Player& player, Level& level, Enemy*& enemy
 void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level) {
 	system("color 4F");
 	Sleep(500);
+	score = 0;
 	create_level(current_level, player, level, enemy, enemies_count, score);
 }
 
