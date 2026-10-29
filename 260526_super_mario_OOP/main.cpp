@@ -317,9 +317,18 @@ public:
 
 	GameObject* getElements() { return background_elem; }
 	int getCount() const { return background_elems_count; }
+	
+	void hitBlock(int index) {
+		if (index >= 0 && index < background_elems_count) {
+			if (background_elem[index].getKind() == '?') {
+				background_elem[index].setKind('-');
+			}
+		}
+	}
 };
 
 Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count);
+void spawn_coin(float x, float y, Enemy*& enemy, int& enemies_count);
 void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score);
 void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level);
 void switch_level(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score);
@@ -372,11 +381,9 @@ int main()
 		char hit = player.moveAndCheck(level.getElements(), level.getCount(), hit_x, hit_y, hit_idx);
 		
 		if (hit == '?') {
-			level.getElements()[hit_idx].setKind('-');
-			*add_new_enemy(enemy, enemies_count) = Enemy(hit_x, hit_y - 3, 3, 2, '$');
-			enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
-		}
-		else if (hit == '+') {
+			level.hitBlock(hit_idx);
+			spawn_coin(hit_x, hit_y, enemy, enemies_count);
+		} else if (hit == '+') {
 			switch_level(player, level, enemy, enemies_count, score);
 			continue;
 		}
@@ -420,6 +427,11 @@ Enemy *add_new_enemy(Enemy*& enemy, int& enemies_count) {
 	}
 	new (&enemy[enemies_count - 1]) Enemy();
 	return &enemy[enemies_count - 1];
+}
+
+void spawn_coin(float x, float y, Enemy*& enemy, int& enemies_count) {
+	*add_new_enemy(enemy, enemies_count) = Enemy(x, y - 3, 3, 2, '$');
+	enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
 }
 
 void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score) {
