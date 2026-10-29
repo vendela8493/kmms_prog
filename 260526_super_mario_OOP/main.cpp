@@ -4,12 +4,34 @@
 #include <sstream>
 #include <windows.h>
 
-struct GameObject {
+class GameObject {
+public:
 	float x, y;
 	float width, height;
 	float vertical_speed, horizontal_speed;
 	char kind;
 	bool is_flying;
+	
+	GameObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' ') {
+		x = init_x;
+		y = init_y;
+		width = init_width;
+		height = init_height;
+		kind = init_kind;
+		vertical_speed = 0;
+		horizontal_speed = 0.2f;
+		is_flying = false;
+	}
+
+	void setPos(float new_x, float new_y) {
+		x = new_x;
+		y = new_y;
+	}
+
+	bool checkCollision(const GameObject& other) const {
+		return ((x + width) > other.x) && (x < (other.x + other.width)) &&
+		       ((y + height) > other.y) && (y < (other.y + other.height));
+	}
 };
 
 class Map {
@@ -89,16 +111,13 @@ public:
 
 GameObject* add_new_background_elem(GameObject*& background_elem, int& background_elems_count);
 GameObject* add_new_enemy(GameObject*& enemy, int& enemies_count);
-bool check_collision(const GameObject& obj_1, const GameObject& obj_2);
 void create_level(int current_level, GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int& enemies_count, int& score);
 void horizontal_move_object(GameObject* obj, GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int& enemies_count, int& score, int& current_level, int max_level);
-void init_object(GameObject* obj, float init_x, float init_y, float init_width, float init_height, char init_kind);
 void kill_player(GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int& enemies_count, int& score, int& current_level);
 void player_collision_model(GameObject& player, GameObject*& enemy, int& enemies_count, GameObject*& background_elem, int& background_elems_count, int& score, int& current_level);
 void remove_enemy(int i, GameObject*& enemy, int& enemies_count);
 void scroll_map(float dx, GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int enemies_count);
 void set_cursor(int x, int y);
-void set_object_pos(GameObject* obj, float obj_pos_x, float obj_pos_y);
 void vertical_move_object(GameObject* obj, GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int& enemies_count, int& score, int& current_level, int max_level);
 
 int main()
@@ -206,12 +225,6 @@ GameObject *add_new_enemy(GameObject*& enemy, int& enemies_count)
 	return &enemy[enemies_count - 1];
 }
 
-bool check_collision(const GameObject& obj_1, const GameObject& obj_2)
-{
-	return ((obj_1.x + obj_1.width) > obj_2.x) && (obj_1.x < (obj_2.x + obj_2.width)) &&
-		   ((obj_1.y + obj_1.height) > obj_2.y) && (obj_1.y < (obj_2.y + obj_2.height));
-}
-
 void create_level(int current_level, GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int& enemies_count, int& score)
 {
 	system("color 9F");
@@ -224,59 +237,59 @@ void create_level(int current_level, GameObject& player, GameObject*& background
 	enemies_count = 0;
 	enemy = nullptr;
 	
-	init_object(&player, 39, 10, 3, 3, '@');
+	player = GameObject(39, 10, 3, 3, '@');
 	score = 0;
 	
 	if (current_level == 1)
 	{
-		init_object(add_new_background_elem(background_elem, background_elems_count), 20, 20, 40, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 30, 10, 5, 3, '?');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 50, 10, 5, 3, '?');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 60, 15, 40, 10, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 60, 5, 10, 3, '-');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 70, 5, 5, 3, '?');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 75, 5, 5, 3, '-');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 80, 5, 5, 3, '?');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 85, 5, 10, 3, '-');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 100, 20, 20, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 120, 15, 10, 10, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 150, 20, 40, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 210, 15, 10, 10, '+');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(20, 20, 40, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(30, 10, 5, 3, '?');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(50, 10, 5, 3, '?');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(60, 15, 40, 10, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(60, 5, 10, 3, '-');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(70, 5, 5, 3, '?');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(75, 5, 5, 3, '-');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(80, 5, 5, 3, '?');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(85, 5, 10, 3, '-');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(100, 20, 20, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(120, 15, 10, 10, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(150, 20, 40, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(210, 15, 10, 10, '+');
 		
-		init_object(add_new_enemy(enemy, enemies_count), 25, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 80, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(25, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(80, 10, 3, 2, 'o');
 	}
 	
 	if (current_level == 2)
 	{
-		init_object(add_new_background_elem(background_elem, background_elems_count), 20, 20, 40, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 60, 15, 10, 10, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 80, 20, 20, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 120, 15, 10, 10, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 150, 20, 40, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 210, 15, 10, 10, '+');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(20, 20, 40, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(60, 15, 10, 10, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(80, 20, 20, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(120, 15, 10, 10, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(150, 20, 40, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(210, 15, 10, 10, '+');
 
-		init_object(add_new_enemy(enemy, enemies_count), 25, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 80, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 65, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 120, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 160, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 175, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(25, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(80, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(65, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(120, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(160, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(175, 10, 3, 2, 'o');
 	}
 	
 	if (current_level == 3)
 	{
-		init_object(add_new_background_elem(background_elem, background_elems_count), 20, 20, 40, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 80, 20, 15, 5, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 120, 15, 15, 10, '#');
-		init_object(add_new_background_elem(background_elem, background_elems_count), 160, 10, 15, 15, '+');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(20, 20, 40, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(80, 20, 15, 5, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(120, 15, 15, 10, '#');
+		*add_new_background_elem(background_elem, background_elems_count) = GameObject(160, 10, 15, 15, '+');
 		
-		init_object(add_new_enemy(enemy, enemies_count), 25, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 50, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 80, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 90, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 120, 10, 3, 2, 'o');
-		init_object(add_new_enemy(enemy, enemies_count), 130, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(25, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(50, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(80, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(90, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(120, 10, 3, 2, 'o');
+		*add_new_enemy(enemy, enemies_count) = GameObject(130, 10, 3, 2, 'o');
 	}
 }
 
@@ -285,7 +298,7 @@ void horizontal_move_object(GameObject *obj, GameObject& player, GameObject*& ba
 	obj->x += obj->horizontal_speed;
 	
 	for (int i = 0; i < background_elems_count; i++)
-		if (check_collision(*obj, background_elem[i]))
+		if (obj->checkCollision(background_elem[i]))
 		{
 			obj->x -= obj->horizontal_speed;
 			obj->horizontal_speed = -obj->horizontal_speed;
@@ -304,17 +317,6 @@ void horizontal_move_object(GameObject *obj, GameObject& player, GameObject*& ba
 	}
 }
 
-void init_object(GameObject *obj, float init_x, float init_y, float init_width, float init_height, char init_kind)
-{
-	set_object_pos(obj, init_x, init_y);
-	obj->width = init_width;
-	obj->height = init_height;
-	obj->vertical_speed = 0;
-	obj->kind = init_kind;
-	obj->horizontal_speed = 0.2;
-	obj->is_flying = false;
-}
-
 void kill_player(GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int& enemies_count, int& score, int& current_level)
 {
 	system("color 4F");
@@ -326,7 +328,7 @@ void player_collision_model(GameObject& player, GameObject*& enemy, int& enemies
 {
 	for (int i = 0; i < enemies_count; i++)
 	{
-		if (check_collision(player, enemy[i]))
+		if (player.checkCollision(enemy[i]))
 		{
 			if (enemy[i].kind == 'o')
 			{
@@ -380,7 +382,7 @@ void scroll_map(float dx, GameObject& player, GameObject*& background_elem, int&
 	player.x -= dx;
 	for (int i = 0; i < background_elems_count; i++)
 	{
-		if (check_collision(player, background_elem[i]))
+		if (player.checkCollision(background_elem[i]))
 		{
 			player.x += dx;
 			return;
@@ -406,21 +408,15 @@ void set_cursor(int x, int y)
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
-void set_object_pos(GameObject *obj, float obj_pos_x, float obj_pos_y)
-{
-	obj->x = obj_pos_x;
-	obj->y = obj_pos_y;
-}
-
 void vertical_move_object(GameObject *obj, GameObject& player, GameObject*& background_elem, int& background_elems_count, GameObject*& enemy, int& enemies_count, int& score, int& current_level, int max_level)
 {
 	obj->is_flying = true;
 	obj->vertical_speed += 0.05;
-	set_object_pos(obj, obj->x, obj->y + obj->vertical_speed);
+	obj->setPos(obj->x, obj->y + obj->vertical_speed);
 	
 	for (int i = 0; i < background_elems_count; i++)
 	{
-		if (check_collision(*obj, background_elem[i]))
+		if (obj->checkCollision(background_elem[i]))
 		{
 			if (obj->vertical_speed > 0)
 			{
@@ -430,7 +426,7 @@ void vertical_move_object(GameObject *obj, GameObject& player, GameObject*& back
 			if ((background_elem[i].kind == '?') && (obj->vertical_speed < 0) && (obj == &player))
 			{
 				background_elem[i].kind = '-';
-				init_object(add_new_enemy(enemy, enemies_count), background_elem[i].x, background_elem[i].y-3, 3, 2, '$');
+				*add_new_enemy(enemy, enemies_count) = GameObject(background_elem[i].x, background_elem[i].y - 3, 3, 2, '$');
 				enemy[enemies_count - 1].vertical_speed = -0.7;
 			}
 			
