@@ -58,9 +58,12 @@ public:
 		for (int i = 0; i < background_elems_count; i++) {
 			if (checkCollision(background_elem[i])) {
 				if (vertical_speed > 0) {
+					y = background_elem[i].getY() - height;
 					is_flying = false;
 				}
-				moveBy(0, -vertical_speed);
+				else if (vertical_speed < 0) {
+					y = background_elem[i].getY() + background_elem[i].getHeight();
+				}
 				vertical_speed = 0;
 				break;
 			}
@@ -93,10 +96,6 @@ public:
 
 		for (int i = 0; i < background_elems_count; i++) {
 			if (checkCollision(background_elem[i])) {
-				if (vertical_speed > 0) {
-					is_flying = false;
-				}
-
 				char hit_kind = ' ';
 
 				if (background_elem[i].getKind() == '?' && vertical_speed < 0) {
@@ -104,18 +103,27 @@ public:
 					hit_x = background_elem[i].getX();
 					hit_y = background_elem[i].getY();
 					hit_index = i;
-				}
-
-				else if (background_elem[i].getKind() == '+') {
+				} else if (background_elem[i].getKind() == '+') {
 					hit_kind = '+';
 				}
+				
+				if (vertical_speed > 0) {
+					y = background_elem[i].getY() - height;
+					is_flying = false;
+				} else if (vertical_speed < 0) {
+					y = background_elem[i].getY() + background_elem[i].getHeight();
+				}
 
-				moveBy(0, -vertical_speed);
 				vertical_speed = 0;
 				return hit_kind;
 			}
 		}
 		return ' ';
+	}
+	
+	bool isStomping(const GameObject& enemy) const {
+		return is_flying && (vertical_speed > 0) &&
+		       ((y + height) <= (enemy.getY() + enemy.getHeight() * 0.5f + 1.0f));
 	}
 };
 
@@ -160,24 +168,21 @@ private:
 	}
 		
 public:
-	Map(int w = 80, int h = 25): width(w), height(h)
-	{
+	Map(int w = 80, int h = 25): width(w), height(h) {
 		grid = new char*[height];
 		
 		for (int i = 0; i < height; i++)
 			grid[i] = new char[width + 1];
 	}
 	
-	~Map()
-	{
+	~Map() {
 		for (int i = 0; i < height; i++)
 			delete[] grid[i];
 		
 		delete[] grid;
 	}
 	
-	void clear()
-	{
+	void clear() {
 		for (int i = 0; i < width; i++)
 			grid[0][i] = ' ';
 		
@@ -188,8 +193,7 @@ public:
 				grid[j][k] = grid[0][k];
 	}
 	
-	void addObject(const GameObject& obj) 
-    {
+	void addObject(const GameObject& obj) {
         int int_x = (int)round(obj.getX());
         int int_y = (int)round(obj.getY());
         int int_width = (int)round(obj.getWidth());
@@ -201,8 +205,7 @@ public:
                     grid[j][i] = obj.getKind();
     }
 	
-	void showScore(int score) 
-    {
+	void showScore(int score) {
         std::ostringstream ss;
         ss << "Score: " << score;
         std::string text = ss.str();
@@ -210,8 +213,7 @@ public:
             grid[1][i + 5] = text[i];
     }
 
-    void render() const 
-    {
+    void render() const {
         grid[height - 1][width - 1] = '\0';
 		
         for (int j = 0; j < height; j++) 
@@ -316,8 +318,7 @@ int main()
 	
 	create_level(current_level, player, level, enemy, enemies_count, score);
 	
-	do 
-	{
+	do {
 		map.clear();
 		
 		if (GetKeyState(VK_SPACE) < 0)
@@ -339,46 +340,37 @@ int main()
 		
 		char hit = player.moveAndCheck(level.getElements(), level.getCount(), hit_x, hit_y, hit_idx);
 		
-		if (hit == '?') 
-		{
+		if (hit == '?') {
 			level.getElements()[hit_idx].setKind('-');
 			*add_new_enemy(enemy, enemies_count) = Enemy(hit_x, hit_y - 3, 3, 2, '$');
 			enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
 		}
-		
-		else if (hit == '+')
-		{
+		else if (hit == '+') {
 			current_level++;
-			if (current_level > max_level)
-			{
+			
+			if (current_level > max_level) {
 				current_level = 1;
 			}
-					
 			system("color 2F");
 			Sleep(500); 
 			create_level(current_level, player, level, enemy, enemies_count, score);
 			continue;
 		}
 	
-		
 		player_collision_model(player, enemy, enemies_count, level, score, current_level);
 		
-		for (int i = 0; i < level.getCount(); i++)
-		{
+		for (int i = 0; i < level.getCount(); i++) {
 			map.addObject(level.getElements()[i]);
 		}
 		
-		for (int i = 0; i < enemies_count; i++)
-		{
+		for (int i = 0; i < enemies_count; i++) {
 			enemy[i].move(level.getElements(), level.getCount());
 			
-			if (enemy[i].getY() > MAP_HEIGHT)
-			{
+			if (enemy[i].getY() > MAP_HEIGHT) {
 				remove_enemy(i, enemy, enemies_count);
 				i--;
 				continue;
 			}
-			
 			map.addObject(enemy[i]);
 		}
 		
@@ -389,28 +381,24 @@ int main()
 		map.render();
 		
 		Sleep(10);
-	}
-	while (GetKeyState(VK_ESCAPE) >= 0);
+	} while (GetKeyState(VK_ESCAPE) >= 0);
 	
 	free(enemy);
 	
 	return 0;
 }
 
-Enemy *add_new_enemy(Enemy*& enemy, int& enemies_count)
-{
+Enemy *add_new_enemy(Enemy*& enemy, int& enemies_count) {
 	enemies_count++;
 	Enemy* temp = (Enemy*)realloc( enemy, sizeof(*enemy) * enemies_count );
-	if (temp != nullptr)
-	{
+	if (temp != nullptr) {
 		enemy = temp;
 	}
 	new (&enemy[enemies_count - 1]) Enemy();
 	return &enemy[enemies_count - 1];
 }
 
-void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score)
-{
+void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score) {
 	system("color 9F");
 	
 	level.load(current_level);
@@ -444,38 +432,28 @@ void create_level(int current_level, Player& player, Level& level, Enemy*& enemy
 	}
 }
 
-void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level)
-{
+void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level) {
 	system("color 4F");
 	Sleep(500);
 	create_level(current_level, player, level, enemy, enemies_count, score);
 }
 
-void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level)
-{
-	for (int i = 0; i < enemies_count; i++)
-	{
-		if (player.checkCollision(enemy[i]))
-		{
-			if (enemy[i].getKind() == 'o')
-			{
-				if ((player.getIsFlying() == true) &&
-					(player.getVerticalSpeed() > 0) &&
-					(player.getY() + player.getHeight() < enemy[i].getY() + enemy[i].getHeight() * 0.5 ))
-				{
+void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level) {
+	for (int i = 0; i < enemies_count; i++) {
+		if (player.checkCollision(enemy[i])) {
+			if (enemy[i].getKind() == 'o') {
+				if (player.isStomping(enemy[i])) {
 					score += 50;
 					remove_enemy(i, enemy, enemies_count);
 					i--;
 					continue;
-				}
-				else
-				{
+				} else {
 					kill_player(player, level, enemy, enemies_count, score, current_level);
+					return;
 				}
 			}
 			
-			if (enemy[i].getKind() == '$')
-			{
+			if (enemy[i].getKind() == '$') {
 				score += 100;
 				remove_enemy(i, enemy, enemies_count);
 				i--;
@@ -485,35 +463,27 @@ void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, L
 	}
 }
 
-void remove_enemy(int i, Enemy*& enemy, int& enemies_count) 
-{
+void remove_enemy(int i, Enemy*& enemy, int& enemies_count) {
 	enemies_count--;
 	enemy[i] = enemy[enemies_count];
-	if (enemies_count == 0) 
-	{
+	if (enemies_count == 0) {
 		free(enemy);
 		enemy = nullptr;
-	}
-	else
-	{
+	} else {
 		Enemy* temp = (Enemy*)realloc(enemy, sizeof(*enemy) * enemies_count);
+		
 		if (temp != nullptr)
-		{
 			enemy = temp;
-		}
 	}	
 }
 
-void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemies_count)
-{
+void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemies_count) {
 	GameObject* background_elem = level.getElements();
     int background_elems_count = level.getCount();
 	
 	player.moveBy(-dx, 0);
-	for (int i = 0; i < background_elems_count; i++)
-	{
-		if (player.checkCollision(background_elem[i]))
-		{
+	for (int i = 0; i < background_elems_count; i++) {
+		if (player.checkCollision(background_elem[i])) {
 			player.moveBy(dx, 0);
 			return;
 		}
@@ -527,8 +497,7 @@ void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemi
 		enemy[i].moveBy(dx, 0);
 }
 
-void set_cursor(int x, int y)
-{
+void set_cursor(int x, int y) {
 	COORD coord;
 	coord.X = x;
 	coord.Y = y;
