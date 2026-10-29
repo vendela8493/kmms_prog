@@ -5,11 +5,12 @@
 #include <windows.h>
 
 class GameObject {
-public:
+protected:
 	float x, y;
 	float width, height;
 	char kind;
 	
+public:	
 	GameObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' ') {
 		x = init_x;
 		y = init_y;
@@ -18,10 +19,15 @@ public:
 		kind = init_kind;
 	}
 
-	void setPos(float new_x, float new_y) {
-		x = new_x;
-		y = new_y;
-	}
+	float getX() const { return x; }
+    float getY() const { return y; }
+    float getWidth() const { return width; }
+    float getHeight() const { return height; }
+    char getKind() const { return kind; }
+	
+	void setPos(float new_x, float new_y) { x = new_x; y = new_y; }
+	void moveBy(float dx, float dy) { x += dx; y += dy; }
+    void setKind(char new_kind) { kind = new_kind; }
 
 	bool checkCollision(const GameObject& other) const {
 		return ((x + width) > other.x) && (x < (other.x + other.width)) &&
@@ -30,15 +36,23 @@ public:
 };
 
 class MovingObject : public GameObject {
-public:
+protected:
 	float vertical_speed, horizontal_speed;
 	bool is_flying;
-
+	
+public:
 	MovingObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' '): GameObject(init_x, init_y, init_width, init_height, init_kind) {
 		vertical_speed = 0;
 		horizontal_speed = 0.2f;
 		is_flying = false;
 	}
+	
+	float getVerticalSpeed() const { return vertical_speed; }
+    void setVerticalSpeed(float speed) { vertical_speed = speed; }
+    float getHorizontalSpeed() const { return horizontal_speed; }
+    void setHorizontalSpeed(float speed) { horizontal_speed = speed; }
+    bool getIsFlying() const { return is_flying; }
+    void setIsFlying(bool flying) { is_flying = flying; }
 };
 
 class Map {
@@ -82,15 +96,15 @@ public:
 	
 	void addObject(const GameObject& obj) 
     {
-        int int_x = (int)round(obj.x);
-        int int_y = (int)round(obj.y);
-        int int_width = (int)round(obj.width);
-        int int_height = (int)round(obj.height);
+        int int_x = (int)round(obj.getX());
+        int int_y = (int)round(obj.getY());
+        int int_width = (int)round(obj.getWidth());
+        int int_height = (int)round(obj.getHeight());
 
         for (int i = int_x; i < (int_x + int_width); i++) 
             for (int j = int_y; j < (int_y + int_height); j++) 
                 if (isWithin(i, j)) 
-                    grid[j][i] = obj.kind;
+                    grid[j][i] = obj.getKind();
     }
 	
 	void showScore(int score) 
@@ -153,9 +167,9 @@ int main()
 	{
 		map.clear();
 		
-		if (!player.is_flying && GetKeyState(VK_SPACE) < 0)
+		if (!player.getIsFlying() && GetKeyState(VK_SPACE) < 0)
 		{
-			player.vertical_speed = -1;
+			player.setVerticalSpeed(-1);
 		}
 		if (GetKeyState('A') < 0)
 		{
@@ -166,7 +180,7 @@ int main()
 			scroll_map(-1, player, background_elem, background_elems_count, enemy, enemies_count);
 		}
 		
-		if (player.y > MAP_HEIGHT)
+		if (player.getY() > MAP_HEIGHT)
 		{
 			kill_player(player, background_elem, background_elems_count, enemy, enemies_count, score, current_level);
 		}
@@ -184,7 +198,7 @@ int main()
 			vertical_move_object(&enemy[i], player, background_elem, background_elems_count, enemy, enemies_count, score, current_level, max_level);
 			horizontal_move_object(&enemy[i], player, background_elem, background_elems_count, enemy, enemies_count, score, current_level, max_level);
 			
-			if (enemy[i].y > MAP_HEIGHT)
+			if (enemy[i].getY() > MAP_HEIGHT)
 			{
 				remove_enemy(i, enemy, enemies_count);
 				i--;
@@ -302,24 +316,24 @@ void create_level(int current_level, MovingObject& player, GameObject*& backgrou
 
 void horizontal_move_object(MovingObject *obj, MovingObject& player, GameObject*& background_elem, int& background_elems_count, MovingObject*& enemy, int& enemies_count, int& score, int& current_level, int max_level)
 {
-	obj->x += obj->horizontal_speed;
+	obj->moveBy(obj->getHorizontalSpeed(), 0);
 	
 	for (int i = 0; i < background_elems_count; i++)
 		if (obj->checkCollision(background_elem[i]))
 		{
-			obj->x -= obj->horizontal_speed;
-			obj->horizontal_speed = -obj->horizontal_speed;
+			obj->moveBy(-obj->getHorizontalSpeed(), 0);
+			obj->setHorizontalSpeed(-obj->getHorizontalSpeed());
 			return;
 		}
 	
-	if (obj->kind == 'o')
+	if (obj->getKind() == 'o')
 	{
 		MovingObject tmp = *obj;
 		vertical_move_object(&tmp, player, background_elem, background_elems_count, enemy, enemies_count, score, current_level, max_level);
-		if (tmp.is_flying)
+		if (tmp.getIsFlying())
 		{
-			obj->x -= obj->horizontal_speed;
-			obj->horizontal_speed = -obj->horizontal_speed;
+			obj->moveBy(-obj->getHorizontalSpeed(), 0);
+			obj->setHorizontalSpeed(-obj->getHorizontalSpeed());
 		}
 	}
 }
@@ -337,11 +351,11 @@ void player_collision_model(MovingObject& player, MovingObject*& enemy, int& ene
 	{
 		if (player.checkCollision(enemy[i]))
 		{
-			if (enemy[i].kind == 'o')
+			if (enemy[i].getKind() == 'o')
 			{
-				if ((player.is_flying == true) &&
-					(player.vertical_speed > 0) &&
-					(player.y + player.height < enemy[i].y + enemy[i].height * 0.5 ))
+				if ((player.getIsFlying() == true) &&
+					(player.getVerticalSpeed() > 0) &&
+					(player.getY() + player.getHeight() < enemy[i].getY() + enemy[i].getHeight() * 0.5 ))
 				{
 					score += 50;
 					remove_enemy(i, enemy, enemies_count);
@@ -354,7 +368,7 @@ void player_collision_model(MovingObject& player, MovingObject*& enemy, int& ene
 				}
 			}
 			
-			if (enemy[i].kind == '$')
+			if (enemy[i].getKind() == '$')
 			{
 				score += 100;
 				remove_enemy(i, enemy, enemies_count);
@@ -386,24 +400,24 @@ void remove_enemy(int i, MovingObject*& enemy, int& enemies_count)
 
 void scroll_map(float dx, MovingObject& player, GameObject*& background_elem, int& background_elems_count, MovingObject*& enemy, int enemies_count)
 {
-	player.x -= dx;
+	player.moveBy(-dx, 0);
 	for (int i = 0; i < background_elems_count; i++)
 	{
 		if (player.checkCollision(background_elem[i]))
 		{
-			player.x += dx;
+			player.moveBy(dx, 0);
 			return;
 		}
 	}
-	player.x += dx;
+	player.moveBy(dx, 0);
 	
 	for (int i = 0; i < background_elems_count; i++)
 	{
-		background_elem[i].x += dx;
+		background_elem[i].moveBy(dx, 0);
 	}
 	for (int i = 0; i < enemies_count; i++)
 	{
-		enemy[i].x += dx;
+		enemy[i].moveBy(dx, 0);
 	}
 }
 
@@ -417,30 +431,30 @@ void set_cursor(int x, int y)
 
 void vertical_move_object(MovingObject *obj, MovingObject& player, GameObject*& background_elem, int& background_elems_count, MovingObject*& enemy, int& enemies_count, int& score, int& current_level, int max_level)
 {
-	obj->is_flying = true;
-	obj->vertical_speed += 0.05;
-	obj->setPos(obj->x, obj->y + obj->vertical_speed);
+	obj->setIsFlying(true);
+	obj->setVerticalSpeed(obj->getVerticalSpeed() + 0.05f);
+	obj->moveBy(0, obj->getVerticalSpeed());
 	
 	for (int i = 0; i < background_elems_count; i++)
 	{
 		if (obj->checkCollision(background_elem[i]))
 		{
-			if (obj->vertical_speed > 0)
+			if (obj->getVerticalSpeed() > 0)
 			{
-				obj->is_flying = false;
+				obj->setIsFlying(false);
 			}
 			
-			if ((background_elem[i].kind == '?') && (obj->vertical_speed < 0) && (obj == &player))
+			if ((background_elem[i].getKind() == '?') && (obj->getVerticalSpeed() < 0) && (obj == &player))
 			{
-				background_elem[i].kind = '-';
-				*add_new_enemy(enemy, enemies_count) = MovingObject(background_elem[i].x, background_elem[i].y - 3, 3, 2, '$');
-				enemy[enemies_count - 1].vertical_speed = -0.7;
+				background_elem[i].setKind('-');
+				*add_new_enemy(enemy, enemies_count) = MovingObject(background_elem[i].getX(), background_elem[i].getY() - 3, 3, 2, '$');
+				enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
 			}
 			
-			obj->y -= obj->vertical_speed;
-			obj->vertical_speed = 0;
+			obj->moveBy(0, -obj->getVerticalSpeed());
+			obj->setVerticalSpeed(0);
 
-			if (background_elem[i].kind == '+')
+			if (background_elem[i].getKind() == '+')
 			{
 				current_level++;
 				if (current_level > max_level)
