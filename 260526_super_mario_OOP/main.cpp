@@ -228,9 +228,13 @@ class Level {
 private:
 	GameObject* background_elem;
 	int background_elems_count;
+	int current_level;
+	int max_level;
 
 public:
-	Level() : background_elem(nullptr), background_elems_count(0) {}
+	Level(int init_level = 1, int init_max = 3) :
+		background_elem(nullptr), background_elems_count(0),
+		current_level(init_level), max_level(init_max) {}
 
 	~Level() {
 		clear();
@@ -250,8 +254,19 @@ public:
 		}
 		background_elem[background_elems_count - 1] = elem;
 	}
+	
+	void nextLevel() {
+		current_level++;
+		if (current_level > max_level) {
+			current_level = 1;
+		}
+	}
 
-	void load(int current_level) {
+	int getCurrentLevel() const { return current_level; }
+	int getMaxLevel() const { return max_level; }
+
+	void load(int level_num) {
+		current_level = level_num;
 		clear();
 
 		if (current_level == 1) {
@@ -292,6 +307,7 @@ public:
 Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count);
 void create_level(int current_level, Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score);
 void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score, int& current_level);
+void switch_level(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score);
 void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level);
 void remove_enemy(int i, Enemy*& enemy, int& enemies_count);
 void scroll_map(float dx, Player& player, Level& level, Enemy*& enemy, int enemies_count);
@@ -346,14 +362,7 @@ int main()
 			enemy[enemies_count - 1].setVerticalSpeed(-0.7f);
 		}
 		else if (hit == '+') {
-			current_level++;
-			
-			if (current_level > max_level) {
-				current_level = 1;
-			}
-			system("color 2F");
-			Sleep(500); 
-			create_level(current_level, player, level, enemy, enemies_count, score);
+			switch_level(player, level, enemy, enemies_count, score);
 			continue;
 		}
 	
@@ -436,6 +445,14 @@ void kill_player(Player& player, Level& level, Enemy*& enemy, int& enemies_count
 	system("color 4F");
 	Sleep(500);
 	create_level(current_level, player, level, enemy, enemies_count, score);
+}
+
+void switch_level(Player& player, Level& level, Enemy*& enemy, int& enemies_count, int& score)
+{
+	level.nextLevel();
+	system("color 2F");
+	Sleep(500);
+	create_level(level.getCurrentLevel(), player, level, enemy, enemies_count, score);
 }
 
 void player_collision_model(Player& player, Enemy*& enemy, int& enemies_count, Level& level, int& score, int& current_level) {
