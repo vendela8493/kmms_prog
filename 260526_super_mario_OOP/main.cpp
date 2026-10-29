@@ -22,28 +22,19 @@ class GameObject {
 		char kind;
 	
 	public:	
-		GameObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' ') {
-			x = init_x;
-			y = init_y;
-			width = init_width;
-			height = init_height;
-			kind = init_kind;
-		}
+		GameObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' ');
 
-		float get_x() const { return x; }
-		float get_y() const { return y; }
-		float get_width() const { return width; }
-		float get_height() const { return height; }
-		char get_kind() const { return kind; }
+		float get_x() const;
+		float get_y() const;
+		float get_width() const;
+		float get_height() const;
+		char get_kind() const;
 		
-		void set_pos(float new_x, float new_y) { x = new_x; y = new_y; }
-		void move_by(float dx, float dy) { x += dx; y += dy; }
-		void set_kind(char new_kind) { kind = new_kind; }
+		void set_pos(float new_x, float new_y);
+		void move_by(float dx, float dy);
+		void set_kind(char new_kind);
 
-		bool check_collision(const GameObject& other) const {
-			return ((x + width) > other.x) && (x < (other.x + other.width)) &&
-				   ((y + height) > other.y) && (y < (other.y + other.height));
-		}
+		bool check_collision(const GameObject& other) const;
 };
 
 class MovingObject : public GameObject {
@@ -52,40 +43,18 @@ class MovingObject : public GameObject {
 		bool is_flying;
 		
 	public:
-		MovingObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' '): GameObject(init_x, init_y, init_width, init_height, init_kind) {
-			vertical_speed = 0;
-			horizontal_speed = 0.2f;
-			is_flying = false;
-		}
+		MovingObject(float init_x = 0, float init_y = 0, float init_width = 1, float init_height = 1, char init_kind = ' ');
 		
-		virtual ~MovingObject() {}
+		virtual ~MovingObject();
 		
-		virtual void move(GameObject* background_elem, int background_elems_count) {
-			is_flying = true;
-			vertical_speed += 0.05f;
-			move_by(0, vertical_speed);
-			
-			for (int i = 0; i < background_elems_count; i++) {
-				if (check_collision(background_elem[i])) {
-					if (vertical_speed > 0) {
-						y = background_elem[i].get_y() - height;
-						is_flying = false;
-					}
-					else if (vertical_speed < 0) {
-						y = background_elem[i].get_y() + background_elem[i].get_height();
-					}
-					vertical_speed = 0;
-					break;
-				}
-			}
-		}
+		virtual void move(GameObject* background_elem, int background_elems_count);
 		
-		float get_vertical_speed() const { return vertical_speed; }
-		void set_vertical_speed(float speed) { vertical_speed = speed; }
-		float get_horizontal_speed() const { return horizontal_speed; }
-		void set_horizontal_speed(float speed) { horizontal_speed = speed; }
-		bool get_is_flying() const { return is_flying; }
-		void set_is_flying(bool flying) { is_flying = flying; }
+		float get_vertical_speed() const;
+		void set_vertical_speed(float speed);
+		float get_horizontal_speed() const;
+		void set_horizontal_speed(float speed);
+		bool get_is_flying() const;
+		void set_is_flying(bool flying);
 };
 
 class Player : public MovingObject {
@@ -269,18 +238,20 @@ class Level {
 		}
 
 		void clear() {
-			free(background_elem);
+			delete[] background_elem;
 			background_elem = nullptr;
 			background_elems_count = 0;
 		}
 
 		void add_background_elem(const GameObject& elem) {
-			background_elems_count++;
-			GameObject* temp = (GameObject*)realloc(background_elem, sizeof(GameObject) * background_elems_count);
-			if (temp != nullptr) {
-				background_elem = temp;
+			GameObject* temp = new GameObject[background_elems_count + 1];
+			for (int i = 0; i < background_elems_count; i++) {
+				temp[i] = background_elem[i];
 			}
-			background_elem[background_elems_count - 1] = elem;
+			temp[background_elems_count] = elem;
+			delete[] background_elem;
+			background_elem = temp;
+			background_elems_count++;
 		}
 		
 		void next_level() {
@@ -552,3 +523,72 @@ void set_cursor(int x, int y) {
 	coord.Y = y;
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
+
+GameObject::GameObject(float init_x, float init_y, float init_width, float init_height, char init_kind) {
+	x = init_x;
+	y = init_y;
+	width = init_width;
+	height = init_height;
+	kind = init_kind;
+}
+
+float GameObject::get_x() const { return x; }
+float GameObject::get_y() const { return y; }
+float GameObject::get_width() const { return width; }
+float GameObject::get_height() const { return height; }
+char GameObject::get_kind() const { return kind; }
+
+void GameObject::set_pos(float new_x, float new_y) { 
+	x = new_x; 
+	y = new_y; 
+}
+
+void GameObject::move_by(float dx, float dy) { 
+	x += dx; 
+	y += dy; 
+}
+
+void GameObject::set_kind(char new_kind) { 
+	kind = new_kind; 
+}
+
+bool GameObject::check_collision(const GameObject& other) const {
+	return ((x + width) > other.x) && (x < (other.x + other.width)) &&
+		   ((y + height) > other.y) && (y < (other.y + other.height));
+}
+
+MovingObject::MovingObject(float init_x, float init_y, float init_width, float init_height, char init_kind)
+	: GameObject(init_x, init_y, init_width, init_height, init_kind) {
+	vertical_speed = 0;
+	horizontal_speed = 0.2f;
+	is_flying = false;
+}
+
+MovingObject::~MovingObject() {}
+
+void MovingObject::move(GameObject* background_elem, int background_elems_count) {
+	is_flying = true;
+	vertical_speed += 0.05f;
+	move_by(0, vertical_speed);
+	
+	for (int i = 0; i < background_elems_count; i++) {
+		if (check_collision(background_elem[i])) {
+			if (vertical_speed > 0) {
+				y = background_elem[i].get_y() - height;
+				is_flying = false;
+			}
+			else if (vertical_speed < 0) {
+				y = background_elem[i].get_y() + background_elem[i].get_height();
+			}
+			vertical_speed = 0;
+			break;
+		}
+	}
+}
+
+float MovingObject::get_vertical_speed() const { return vertical_speed; }
+void MovingObject::set_vertical_speed(float speed) { vertical_speed = speed; }
+float MovingObject::get_horizontal_speed() const { return horizontal_speed; }
+void MovingObject::set_horizontal_speed(float speed) { horizontal_speed = speed; }
+bool MovingObject::get_is_flying() const { return is_flying; }
+void MovingObject::set_is_flying(bool flying) { is_flying = flying; }
