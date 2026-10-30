@@ -2,12 +2,13 @@
 chcp 1251 > log
 del log 
 
-set MAIN="main.cpp"
 set EXE=mario.exe
 set CHARSET="-finput-charset=utf-8 -fexec-charset=windows-1251"
 
 if exist %EXE% del %EXE%
 
-g++ "%CHARSET%" "%MAIN%" -o %EXE%
+g++ "%CHARSET%" main.cpp game_object.cpp -o %EXE%
 
-%EXE%
+if exist %EXE% (
+	%EXE%
+)
