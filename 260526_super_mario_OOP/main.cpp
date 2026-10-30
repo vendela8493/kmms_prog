@@ -1,3 +1,4 @@
+#include "enemy.hpp"
 #include "game_object.hpp"
 #include "level.hpp"
 #include "map.hpp"
@@ -13,17 +14,6 @@
 #include <windows.h>
 
 using namespace rva;
-
-class Enemy : public MovingObject {
-	public:
-		Enemy(
-			float init_x = 0, float init_y = 0, 
-			float init_width = 3, float init_height = 2, char init_kind = ENEMY
-		);
-			
-		void move(GameObject* background_elem, int background_elems_count);
-		int handle_collision(const Player& player, int& score);
-};
 
 Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count);
 
@@ -281,45 +271,4 @@ void set_cursor(int x, int y) {
 	coord.X = x;
 	coord.Y = y;
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
-
-Enemy::Enemy(float init_x, float init_y, float init_width, float init_height, char init_kind)
-	: MovingObject(init_x, init_y, init_width, init_height, init_kind) {}
-
-void Enemy::move(GameObject* background_elem, int background_elems_count) {
-	MovingObject::move(background_elem, background_elems_count);
-
-	move_by(horizontal_speed, 0);
-
-	for (int i = 0; i < background_elems_count; i++) {
-		if (check_collision(background_elem[i])) {
-			move_by(-horizontal_speed, 0);
-			horizontal_speed = -horizontal_speed;
-			return;
-		}
-	}
-
-	if (kind == ENEMY) {
-		MovingObject tmp = *this;
-		tmp.MovingObject::move(background_elem, background_elems_count);
-		if (tmp.get_is_flying()) {
-			move_by(-horizontal_speed, 0);
-			horizontal_speed = -horizontal_speed;
-		}
-	}
-}
-
-int Enemy::handle_collision(const Player& player, int& score) {
-	if (kind == ENEMY) {
-		if (player.is_stomping(*this)) {
-			score += 50;
-			return 1;
-		} else {
-			return -1;
-		}
-	} else if (kind == COIN) {
-		score += 100;
-		return 1;
-	}
-	return 0;
 }
