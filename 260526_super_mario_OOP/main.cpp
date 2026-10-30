@@ -1,16 +1,11 @@
 #include "enemy.hpp"
-#include "game_object.hpp"
 #include "level.hpp"
 #include "map.hpp"
-#include "moving_object.hpp"
 #include "player.hpp"
 #include "section.hpp"
 
-#include <cmath>
 #include <cstdlib>
-#include <iostream>
 #include <new>
-#include <sstream>
 #include <windows.h>
 
 using namespace rva;
@@ -105,7 +100,9 @@ int main()
 			continue;
 		}
 	
-		player_collision_model(player, enemy, enemies_count, level, score, current_level);
+		player_collision_model(
+			player, enemy, enemies_count, level, score, current_level
+		);
 		
 		for (int i = 0; i < level.get_count(); i++) {
 			map.add_object(level.get_elements()[i]);
@@ -136,7 +133,7 @@ int main()
 	return 0;
 }
 
-Enemy *add_new_enemy(Enemy*& enemy, int& enemies_count) {
+Enemy* add_new_enemy(Enemy*& enemy, int& enemies_count) {
 	enemies_count++;
 	Enemy* temp = (Enemy*)realloc( enemy, sizeof(*enemy) * enemies_count );
 	if (temp != nullptr) {
@@ -216,12 +213,12 @@ void player_collision_model(
 			int result = enemy[i].handle_collision(player, score);
 			
 			if (result == 1) {
-					remove_enemy(i, enemy, enemies_count);
-					i--;
-					continue;
+				remove_enemy(i, enemy, enemies_count);
+				i--;
+				continue;
 			} else if (result == -1) {
-					kill_player(player, level, enemy, enemies_count, score, current_level);
-					return;
+				kill_player(player, level, enemy, enemies_count, score, current_level);
+				return;
 			}
 		}
 	}

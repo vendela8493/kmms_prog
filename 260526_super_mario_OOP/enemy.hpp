@@ -23,4 +23,4 @@ class Enemy : public MovingObject {
 
 }
 
-#endif
+#endif // ENEMY_HPP

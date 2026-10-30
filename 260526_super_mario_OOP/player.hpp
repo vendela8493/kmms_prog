@@ -26,4 +26,4 @@ class Player : public MovingObject {
 
 }
 
-#endif
+#endif // PLAYER_HPP

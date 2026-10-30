@@ -28,4 +28,4 @@ class Map {
 
 }
 
-#endif
+#endif // MAP_HPP

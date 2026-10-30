@@ -34,4 +34,4 @@ class MovingObject : public GameObject {
 
 }
 
-#endif
+#endif // MOVING_OBJECT_HPP

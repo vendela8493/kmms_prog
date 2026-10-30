@@ -33,4 +33,4 @@ class Level {
 
 }
 
-#endif
+#endif // LEVEL_HPP

@@ -30,4 +30,4 @@ class GameObject {
 
 }
 
-#endif
+#endif // GAME_OBJECT_HPP
